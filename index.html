@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Chat Family</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --primary: #7C4DFF;
+      --bg: #121212;
+      --surface: #1E1E1E;
+      --surface-light: #2D2D2D;
+      --text: #E0E0E0;
+      --text-dim: #A0A0A0;
+      --border: #2A2A2A;
+    }
+
+    .light-theme {
+      --primary: #6200EE;
+      --bg: #F3F4F6;
+      --surface: #FFFFFF;
+      --surface-light: #F9FAFB;
+      --text: #1F2937;
+      --text-dim: #6B7280;
+      --border: #E5E7EB;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg);
+      overflow: hidden;
+      position: fixed;
+      color: var(--text);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    #login-screen, #lock-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      z-index: 100;
+      background: radial-gradient(circle at top, #2C1B4D, #121212);
+    }
+
+    .light-theme #login-screen, .light-theme #lock-screen {
+      background: radial-gradient(circle at top, #E0D4FF, #F3F4F6);
+    }
+
+    #login-screen h1, #lock-screen h1 {
+      margin-bottom: 24px;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(45deg, #BB86FC, #7C4DFF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .input-field {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      margin-bottom: 16px;
+      font-size: 1rem;
+      text-align: center;
+      outline: none;
+      background-color: var(--surface);
+      color: var(--text);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .btn-main {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #7C4DFF, #6200EE);
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(124, 77, 255, 0.4);
+    }
+
+    #chat-screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      background-color: var(--bg);
+    }
+
+    header {
+      background-color: var(--surface);
+      color: var(--text);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    header .title-text {
+      font-weight: 600;
+      font-size: 1.15rem;
+      flex: 1;
+      text-align: center;
+      margin-right: 42px;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .msg {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      position: relative;
+      word-wrap: break-word;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .msg .sender {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 3px;
+      display: block;
+      color: #BB86FC;
+    }
+
+    .light-theme .msg .sender {
+      color: #6200EE;
+    }
+
+    .msg.received {
+      background-color: var(--surface);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      color: var(--text);
+    }
+
+    .msg.sent {
+      background-color: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .reply-preview {
+      background-color: rgba(0, 0, 0, 0.15);
+      border-left: 3px solid var(--primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      max-height: 50px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .light-theme .reply-preview {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .reply-preview-title {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 2px;
+    }
+
+    .msg-system {
+      align-self: center;
+      max-width: 90%;
+      background: transparent;
+      box-shadow: none;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-align: center;
+      font-style: italic;
+      opacity: 0.7;
+    }
+
+    .file-message {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 180px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .file-info svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+
+    .img-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      display: block;
+    }
+
+    .btn-download {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.15);
+      color: inherit;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+    }
+
+    .btn-download svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .audio-message {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 200px;
+    }
+
+    .audio-message audio {
+      width: 100%;
+      height: 32px;
+      outline: none;
+    }
+
+    #reply-bar {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--surface-light);
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+    }
+
+    #reply-bar-text {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80%;
+    }
+
+    #btn-close-reply {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 12px;
+      background-color: var(--surface);
+      border-top: 1px solid var(--border);
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .input-area input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      outline: none;
+      font-size: 1rem;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .action-btn {
+      background-color: var(--surface-light);
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .action-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    #btn-send {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      z-index: 200;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .modal-content {
+      background-color: var(--surface);
+      width: 100%;
+      max-height: 85%;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 24px;
+      overflow-y: auto;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: calc(24px + var(--safe-bottom));
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .config-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .config-group label {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .theme-toggle-container {
+      display: flex;
+      background-color: var(--surface-light);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .theme-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      color: var(--text-dim);
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .theme-btn.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .btn-save {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .switch-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--surface-light);
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    .context-menu {
+      display: none;
+      position: fixed;
+      background-color: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 300;
+      min-width: 160px;
+      overflow: hidden;
+    }
+
+    .context-item {
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .context-item:active {
+      background-color: var(--border);
+    }
+
+    .context-item.delete {
+      color: #FF5252;
+    }
+
+    #pin-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      z-index: 250;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .pin-modal-content {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .pin-modal-content h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .pin-notice {
+      font-size: 0.85rem;
+      color: #FFB74D;
+      font-weight: 600;
+    }
+
+    .pin-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .pin-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-pin-cancel {
+      background-color: var(--surface-light);
+      color: var(--text);
+    }
+
+    .btn-pin-confirm {
+      background-color: var(--primary);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    <div id="lock-screen" style="display: none;">
+      <h1>App Bloqueado</h1>
+      <input type="password" id="lock-pin" class="input-field" placeholder="Digite sua senha de acesso" pattern="\d*" inputmode="numeric">
+      <button id="btn-unlock" class="btn-main">Acessar Chat</button>
+    </div>
+
+    <div id="login-screen" style="display: none;">
+      <h1>Chat Family</h1>
+      <input type="text" id="username" class="input-field" placeholder="Seu nome ou apelido" maxlength="15" autocomplete="off">
+      <button id="btn-enter" class="btn-main">Entrar no Chat</button>
+    </div>
+
+    <div id="chat-screen">
+      <header>
+        <button class="action-btn" id="btn-config">
+          <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.81,11.69,4.81,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        </button>
+        <div class="title-text" id="group-title">Família</div>
+      </header>
+      <div id="messages"></div>
+      
+      <div id="reply-bar">
+        <div id="reply-bar-text">Replying...</div>
+        <button id="btn-close-reply">&times;</button>
+      </div>
+
+      <div class="input-area">
+        <button class="action-btn" id="btn-attach">
+          <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-3.31 2.69-6 6-6s6 2.69 6 6v11.5c0 4.42-3.58 8-8 8s-8-3.58-8-8V6h2v11.5c0 3.31 2.69 6 6 6s6-2.69 6-6V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 1.1.9 2 2 2s2-.9 2-2V6h2z"/></svg>
+        </button>
+        <input type="file" id="file-input" style="display: none;">
+        <input type="text" id="msg-input" placeholder="Digite uma mensagem..." autocomplete="off">
+        <button class="action-btn" id="btn-send">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="config-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Configurações</h2>
+        <button class="close-modal" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="config-group">
+        <label>Tema</label>
+        <div class="theme-toggle-container">
+          <button class="theme-btn active" id="btn-theme-dark">Escuro</button>
+          <button class="theme-btn" id="btn-theme-light">Claro</button>
+        </div>
+      </div>
+      <div class="config-group">
+        <label>Meu Nome</label>
+        <input type="text" id="settings-username" class="modal-input" maxlength="15">
+      </div>
+      <div class="config-group">
+        <label>Nome do Grupo</label>
+        <input type="text" id="settings-groupname" class="modal-input" maxlength="20">
+      </div>
+      <div class="config-group">
+        <div class="switch-container">
+          <span>Bloquear App com Senha</span>
+          <label class="switch">
+            <input type="checkbox" id="chk-lock">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <button class="btn-save" id="btn-save-settings">Salvar Alterações</button>
+    </div>
+  </div>
+
+  <div class="modal" id="pin-modal">
+    <div class="pin-modal-content">
+      <h3>Definir Senha</h3>
+      <p class="pin-notice">apenas números</p>
+      <input type="password" id="new-pin-input" class="modal-input" pattern="\d*" inputmode="numeric" placeholder="Digite os números">
+      <div class="pin-buttons">
+        <button class="btn-pin-cancel" id="btn-pin-cancel">Cancelar</button>
+        <button class="btn-pin-confirm" id="btn-pin-confirm">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="context-menu" id="message-context-menu">
+    <div class="context-item" id="ctx-reply">Responder</div>
+    <div class="context-item" id="ctx-edit">Editar Mensagem</div>
+    <div class="context-item delete" id="ctx-delete">Apagar</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onChildAdded, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDthwqD0CGFwDov-zfO-Hx6TD_y3lHsnoc",
+      authDomain: "teuzin-apps.firebaseapp.com",
+      databaseURL: "https://teuzin-apps-default-rtdb.firebaseio.com",
+      projectId: "teuzin-apps",
+      storageBucket: "teuzin-apps.firebasestorage.app",
+      messagingSenderId: "695505471506",
+      appId: "1:695505471506:web:efe322e605af4a30bfb0cb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const loginScreen = document.getElementById("login-screen");
+    const lockScreen = document.getElementById("lock-screen");
+    const chatScreen = document.getElementById("chat-screen");
+    const usernameInput = document.getElementById("username");
+    const btnEnter = document.getElementById("btn-enter");
+    const msgInput = document.getElementById("msg-input");
+    const btnSend = document.getElementById("btn-send");
+    const messagesContainer = document.getElementById("messages");
+    const btnConfig = document.getElementById("btn-config");
+    const configModal = document.getElementById("config-modal");
+    const btnCloseModal = document.getElementById("btn-close-modal");
+    const groupTitle = document.getElementById("group-title");
+    
+    const settingsUsername = document.getElementById("settings-username");
+    const settingsGroupname = document.getElementById("settings-groupname");
+    const chkLock = document.getElementById("chk-lock");
+    const btnSaveSettings = document.getElementById("btn-save-settings");
+    const btnThemeDark = document.getElementById("btn-theme-dark");
+    const btnThemeLight = document.getElementById("btn-theme-light");
+    
+    const lockPin = document.getElementById("lock-pin");
+    const btnUnlock = document.getElementById("btn-unlock");
+    const ctxMenu = document.getElementById("message-context-menu");
+    
+    const replyBar = document.getElementById("reply-bar");
+    const replyBarText = document.getElementById("reply-bar-text");
+    const btnCloseReply = document.getElementById("btn-close-reply");
+
+    const btnAttach = document.getElementById("btn-attach");
+    const fileInput = document.getElementById("file-input");
+
+    const pinModal = document.getElementById("pin-modal");
+    const newPinInput = document.getElementById("new-pin-input");
+    const btnPinCancel = document.getElementById("btn-pin-cancel");
+    const btnPinConfirm = document.getElementById("btn-pin-confirm");
+
+    let currentUser = localStorage.getItem("chat_family_user") || "";
+    let isLockEnabled = localStorage.getItem("chat_family_lock_enabled") === "true";
+    let activeTheme = localStorage.getItem("chat_family_theme") || "dark";
+    let selectedMessageId = null;
+    let selectedMessageElement = null;
+    let pressTimer = null;
+    let isEditing = false;
+    let editMessageId = null;
+    let replyMessageId = null;
+    let deletedMessagesLocal = JSON.parse(localStorage.getItem("chat_family_deleted_local") || "[]");
+
+    if (activeTheme === "light") {
+      document.documentElement.classList.add("light-theme");
+      btnThemeLight.classList.add("active");
+      btnThemeDark.classList.remove("active");
+    }
+
+    if (isLockEnabled) {
+      lockScreen.style.display = "flex";
+      chatScreen.style.display = "none";
+      loginScreen.style.display = "none";
+    } else if (currentUser) {
+      chatScreen.style.display = "flex";
+      initChat();
+    } else {
+      loginScreen.style.display = "flex";
+    }
+
+    btnUnlock.addEventListener("click", () => {
+      const pin = lockPin.value;
+      const savedPin = localStorage.getItem("chat_family_pin");
+      if (pin === savedPin) {
+        lockScreen.style.display = "none";
+        if (currentUser) {
+          chatScreen.style.display = "flex";
+          initChat();
+        } else {
+          loginScreen.style.display = "flex";
+        }
+      } else {
+        alert("Senha incorreta!");
+        lockPin.value = "";
+      }
+    });
+
+    lockPin.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") btnUnlock.click();
+    });
+
+    btnEnter.addEventListener("click", () => {
+      const name = usernameInput.value.trim();
+      if (name) {
+        currentUser = name;
+        localStorage.setItem("chat_family_user", name);
+        loginScreen.style.display = "none";
+        chatScreen.style.display = "flex";
+        initChat();
+      }
+    });
+
+    usernameInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") btnEnter.click();
+    });
+
+    document.addEventListener("click", () => {
+      ctxMenu.style.display = "none";
+    });
+
+    btnConfig.addEventListener("click", () => {
+      settingsUsername.value = currentUser;
+      settingsGroupname.value = groupTitle.textContent;
+      chkLock.checked = localStorage.getItem("chat_family_lock_enabled") === "true";
+      configModal.style.display = "flex";
+    });
+
+    btnCloseModal.addEventListener("click", () => {
+      configModal.style.display = "none";
+    });
+
+    btnThemeDark.addEventListener("click", () => {
+      document.documentElement.classList.remove("light-theme");
+      btnThemeDark.classList.add("active");
+      btnThemeLight.classList.remove("active");
+      activeTheme = "dark";
+    });
+
+    btnThemeLight.addEventListener("click", () => {
+      document.documentElement.classList.add("light-theme");
+      btnThemeLight.classList.add("active");
+      btnThemeDark.classList.remove("active");
+      activeTheme = "light";
+    });
+
+    chkLock.addEventListener("change", () => {
+      if (chkLock.checked) {
+        if (localStorage.getItem("chat_family_lock_enabled") !== "true") {
+          newPinInput.value = "";
+          pinModal.style.display = "flex";
+        }
+      } else {
+        localStorage.setItem("chat_family_lock_enabled", "false");
+      }
+    });
+
+    btnPinCancel.addEventListener("click", () => {
+      pinModal.style.display = "none";
+      chkLock.checked = false;
+    });
+
+    btnPinConfirm.addEventListener("click", () => {
+      let pin = newPinInput.value;
+      pin = pin.replace(/\D/g, "");
+      if (pin.length > 0) {
+        localStorage.setItem("chat_family_pin", pin);
+        localStorage.setItem("chat_family_lock_enabled", "true");
+        pinModal.style.display = "none";
+      } else {
+        alert("Senha inválida! Use apenas números.");
+        newPinInput.value = "";
+      }
+    });
+
+    newPinInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") btnPinConfirm.click();
+    });
+
+    btnSaveSettings.addEventListener("click", () => {
+      const newName = settingsUsername.value.trim();
+      const newGroup = settingsGroupname.value.trim();
+
+      if (newName && newName !== currentUser) {
+        const oldName = currentUser;
+        currentUser = newName;
+        localStorage.setItem("chat_family_user", newName);
+        
+        const systemRef = push(ref(db, "messages"));
+        set(systemRef, {
+          type: "system",
+          text: `${oldName} trocou o nome para ${newName}`,
+          timestamp: Date.now()
+        });
+      }
+
+      if (newGroup && newGroup !== groupTitle.textContent) {
+        onValue(ref(db, "config/lastGroupUpdate"), (snapshot) => {
+          const lastUpdate = snapshot.val() || 0;
+          const now = Date.now();
+          if (now - lastUpdate >= 15 * 60 * 1000) {
+            set(ref(db, "config/groupName"), newGroup);
+            set(ref(db, "config/lastGroupUpdate"), now);
+
+            const systemRef = push(ref(db, "messages"));
+            set(systemRef, {
+              type: "system",
+              text: `${currentUser} alterou o nome do grupo para ${newGroup}`,
+              timestamp: Date.now()
+            });
+          } else {
+            const remaining = Math.ceil((15 * 60 * 1000 - (now - lastUpdate)) / 60000);
+            alert(`O nome do grupo só pode ser alterado de 15 em 15 minutos. Aguarde mais ${remaining} minutos.`);
+          }
+        }, { onlyOnce: true });
+      }
+
+      localStorage.setItem("chat_family_theme", activeTheme);
+      configModal.style.display = "none";
+    });
+
+    btnCloseReply.addEventListener("click", () => {
+      replyMessageId = null;
+      replyBar.style.display = "none";
+    });
+
+    btnAttach.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Data = e.target.result;
+        let fileType = "file";
+        
+        if (file.type.startsWith("audio/")) {
+          fileType = "audio";
+        } else if (file.type.startsWith("image/")) {
+          fileType = "image";
+        }
+
+        const messagesRef = ref(db, "messages");
+        const newMsgRef = push(messagesRef);
+        const msgPayload = {
+          sender: currentUser,
+          text: file.name,
+          fileData: base64Data,
+          fileName: file.name,
+          type: fileType,
+          timestamp: Date.now()
+        };
+
+        if (replyMessageId) {
+          msgPayload.replyTo = replyMessageId;
+          msgPayload.replyText = selectedMessageElement.dataset.text;
+          msgPayload.replySender = selectedMessageElement.dataset.sender;
+          replyMessageId = null;
+          replyBar.style.display = "none";
+        }
+
+        set(newMsgRef, msgPayload);
+        fileInput.value = "";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function initChat() {
+      const messagesRef = ref(db, "messages");
+      const groupNameRef = ref(db, "config/groupName");
+
+      onValue(groupNameRef, (snapshot) => {
+        const name = snapshot.val();
+        groupTitle.textContent = name || "Família";
+      });
+
+      function sendMessage(text, type = "text") {
+        if (isEditing) {
+          update(ref(db, `messages/${editMessageId}`), { text: text });
+          isEditing = false;
+          editMessageId = null;
+          msgInput.placeholder = "Digite uma mensagem...";
+        } else {
+          const newMsgRef = push(messagesRef);
+          const msgPayload = {
+            sender: currentUser,
+            text: text,
+            type: type,
+            timestamp: Date.now()
+          };
+          if (replyMessageId) {
+            msgPayload.replyTo = replyMessageId;
+            msgPayload.replyText = selectedMessageElement.dataset.text;
+            msgPayload.replySender = selectedMessageElement.dataset.sender;
+            replyMessageId = null;
+            replyBar.style.display = "none";
+          }
+          set(newMsgRef, msgPayload);
+        }
+      }
+
+      btnSend.addEventListener("click", () => {
+        const text = msgInput.value.trim();
+        if (text) {
+          sendMessage(text, "text");
+          msgInput.value = "";
+        }
+      });
+
+      msgInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") btnSend.click();
+      });
+
+      onValue(messagesRef, (snapshot) => {
+        const data = snapshot.val();
+        messagesContainer.innerHTML = "";
+        if (data) {
+          Object.keys(data).forEach(id => {
+            if (!deletedMessagesLocal.includes(id)) {
+              renderMessage(id, data[id]);
+            }
+          });
+        }
+      });
+    }
+
+    function renderMessage(id, data) {
+      const msgDiv = document.createElement("div");
+      
+      if (data.type === "system") {
+        msgDiv.classList.add("msg", "msg-system");
+        msgDiv.textContent = data.text;
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return;
+      }
+
+      const isMe = data.sender === currentUser;
+      const isFile = data.type === "file";
+      const isAudio = data.type === "audio";
+      const isImage = data.type === "image";
+      
+      msgDiv.classList.add("msg", isMe ? "sent" : "received");
+      msgDiv.id = `msg-${id}`;
+      msgDiv.dataset.id = id;
+      msgDiv.dataset.sender = data.sender;
+      msgDiv.dataset.text = data.text;
+      
+      if (!isMe) {
+        const senderSpan = document.createElement("span");
+        senderSpan.classList.add("sender");
+        senderSpan.textContent = data.sender;
+        msgDiv.appendChild(senderSpan);
+      }
+
+      if (data.replyTo) {
+        const replyBlock = document.createElement("div");
+        replyBlock.classList.add("reply-preview");
+        
+        const replyTitle = document.createElement("div");
+        replyTitle.classList.add("reply-preview-title");
+        replyTitle.textContent = data.replySender === currentUser ? "Você" : data.replySender;
+        
+        replyBlock.appendChild(replyTitle);
+        replyBlock.appendChild(document.createTextNode(data.replyText));
+        
+        replyBlock.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const target = document.getElementById(`msg-${data.replyTo}`);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+            target.style.outline = "2px solid var(--primary)";
+            setTimeout(() => target.style.outline = "none", 2000);
+          }
+        });
+        msgDiv.appendChild(replyBlock);
+      }
+
+      if (isImage) {
+        const fileContainer = document.createElement("div");
+        fileContainer.classList.add("file-message");
+
+        const imgEl = document.createElement("img");
+        imgEl.classList.add("img-preview");
+        imgEl.src = data.fileData;
+        fileContainer.appendChild(imgEl);
+
+        const fileInfo = document.createElement("div");
+        fileInfo.classList.add("file-info");
+        fileInfo.innerHTML = `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.classList.add("file-name");
+        nameSpan.textContent = data.fileName;
+        fileInfo.appendChild(nameSpan);
+        fileContainer.appendChild(fileInfo);
+
+        const dlBtn = document.createElement("a");
+        dlBtn.classList.add("btn-download");
+        dlBtn.href = data.fileData;
+        dlBtn.download = data.fileName;
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg> Baixar`;
+        dlBtn.addEventListener("click", (e) => e.stopPropagation());
+        fileContainer.appendChild(dlBtn);
+        
+        msgDiv.appendChild(fileContainer);
+      } else if (isFile) {
+        const fileContainer = document.createElement("div");
+        fileContainer.classList.add("file-message");
+
+        const fileInfo = document.createElement("div");
+        fileInfo.classList.add("file-info");
+        fileInfo.innerHTML = `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.classList.add("file-name");
+        nameSpan.textContent = data.fileName;
+        fileInfo.appendChild(nameSpan);
+        fileContainer.appendChild(fileInfo);
+
+        const dlBtn = document.createElement("a");
+        dlBtn.classList.add("btn-download");
+        dlBtn.href = data.fileData;
+        dlBtn.download = data.fileName;
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg> Baixar`;
+        dlBtn.addEventListener("click", (e) => e.stopPropagation());
+        fileContainer.appendChild(dlBtn);
+        
+        msgDiv.appendChild(fileContainer);
+      } else if (isAudio) {
+        const audioContainer = document.createElement("div");
+        audioContainer.classList.add("audio-message");
+
+        const audioEl = document.createElement("audio");
+        audioEl.controls = true;
+        audioEl.src = data.fileData;
+        audioEl.addEventListener("play", (e) => e.stopPropagation());
+        audioEl.addEventListener("pause", (e) => e.stopPropagation());
+        audioContainer.appendChild(audioEl);
+
+        const dlBtn = document.createElement("a");
+        dlBtn.classList.add("btn-download");
+        dlBtn.href = data.fileData;
+        dlBtn.download = data.fileName;
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg> Baixar Áudio`;
+        dlBtn.addEventListener("click", (e) => e.stopPropagation());
+        audioContainer.appendChild(dlBtn);
+
+        msgDiv.appendChild(audioContainer);
+      } else {
+        const textNode = document.createTextNode(data.text);
+        msgDiv.appendChild(textNode);
+      }
+
+      msgDiv.addEventListener("touchstart", (e) => handlePressStart(e, msgDiv));
+      msgDiv.addEventListener("touchend", handlePressEnd);
+      msgDiv.addEventListener("mousedown", (e) => handlePressStart(e, msgDiv));
+      msgDiv.addEventListener("mouseup", handlePressEnd);
+      
+      messagesContainer.appendChild(msgDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function handlePressStart(e, element) {
+      if (e.type === "click") return;
+      selectedMessageId = element.dataset.id;
+      selectedMessageElement = element;
+      
+      let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+      pressTimer = setTimeout(() => {
+        showContextMenu(clientX, clientY, element.dataset.sender === currentUser);
+      }, 600);
+    }
+
+    function handlePressEnd() {
+      clearTimeout(pressTimer);
+    }
+
+    function showContextMenu(x, y, isMyMessage) {
+      ctxMenu.style.left = `${Math.min(x, window.innerWidth - 180)}px`;
+      ctxMenu.style.top = `${Math.min(y, window.innerHeight - 150)}px`;
+      ctxMenu.style.display = "block";
+
+      const btnEdit = document.getElementById("ctx-edit");
+      const btnDelete = document.getElementById("ctx-delete");
+      const btnReply = document.getElementById("ctx-reply");
+
+      if (selectedMessageElement.querySelector(".file-message") || selectedMessageElement.querySelector(".audio-message")) {
+        btnEdit.style.display = "none";
+      } else {
+        if (isMyMessage) {
+          btnEdit.style.display = "block";
+        } else {
+          btnEdit.style.display = "none";
+        }
+      }
+
+      btnReply.style.display = "block";
+
+      if (isMyMessage) {
+        btnDelete.textContent = "Apagar para Todos";
+        btnDelete.classList.add("delete");
+      } else {
+        btnDelete.textContent = "Apagar para Mim";
+        btnDelete.classList.remove("delete");
+      }
+    }
+
+    document.getElementById("ctx-reply").addEventListener("click", (e) => {
+      e.stopPropagation();
+      ctxMenu.style.display = "none";
+      replyMessageId = selectedMessageId;
+      replyBarText.textContent = `Respondendo a ${selectedMessageElement.dataset.sender}: "${selectedMessageElement.dataset.text}"`;
+      replyBar.style.display = "flex";
+      msgInput.focus();
+    });
+
+    document.getElementById("ctx-edit").addEventListener("click", (e) => {
+      e.stopPropagation();
+      ctxMenu.style.display = "none";
+      isEditing = true;
+      editMessageId = selectedMessageId;
+      msgInput.value = selectedMessageElement.dataset.text;
+      msgInput.placeholder = "Editando mensagem...";
+      msgInput.focus();
+    });
+
+    document.getElementById("ctx-delete").addEventListener("click", (e) => {
+      e.stopPropagation();
+      ctxMenu.style.display = "none";
+      if (selectedMessageId) {
+        if (selectedMessageElement.dataset.sender === currentUser) {
+          remove(ref(db, `messages/${selectedMessageId}`));
+        } else {
+          deletedMessagesLocal.push(selectedMessageId);
+          localStorage.setItem("chat_family_deleted_local", JSON.stringify(deletedMessagesLocal));
+          const el = document.getElementById(`msg-${selectedMessageId}`);
+          if (el) el.remove();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
