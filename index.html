@@ -16,7 +16,6 @@
             --wa-muted: #8696a0;
             --wa-incoming: #202c33;
             --wa-outgoing: #005c4b;
-            --wa-accent: #00a884;
         }
         body {
             background-color: var(--wa-bg);
@@ -35,13 +34,29 @@
             background-color: #0b141a;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay;
-            opacity: 0.4;
+            opacity: 0.3;
         }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col justify-between antialiased select-none">
 
-    <div id="screen-auth" class="flex-1 flex flex-col items-center justify-center p-6">
+    <div id="screen-loading" class="absolute inset-0 bg-[#0b141a] z-50 flex flex-col items-center justify-center p-6">
+        <div class="text-[#00a884] text-5xl mb-6 animate-pulse">
+            <i class="fab fa-whatsapp"></i>
+        </div>
+        <div class="w-12 h-1 bg-[#222e35] rounded-full overflow-hidden">
+            <div class="h-full bg-[#00a884] w-1/2 rounded-full animate-[loading_1s_infinite_ease-in-out]"></div>
+        </div>
+        <span class="text-xs text-muted mt-3 tracking-widest uppercase">Carregando dados...</span>
+    </div>
+    <style>
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+    </style>
+
+    <div id="screen-auth" class="hide flex-1 flex flex-col items-center justify-center p-6">
         <div class="wa-panel w-full max-w-sm p-6 border wa-border rounded-xl flex flex-col items-center text-center shadow-2xl">
             <div class="w-16 h-16 bg-[#00a884] rounded-full flex items-center justify-center text-white text-3xl mb-4">
                 <i class="fab fa-whatsapp"></i>
@@ -99,24 +114,29 @@
 
     <div id="screen-private-chat" class="hide flex-1 flex flex-col h-full w-full max-w-md mx-auto relative wa-panel border-x wa-border">
         <header class="wa-header h-14 px-3 flex items-center justify-between border-b wa-border z-10">
-            <div class="flex items-center gap-2 overflow-hidden">
-                <button id="btn-chat-back" class="text-muted hover:text-white px-1">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <img id="chat-target-avatar" src="" class="w-9 h-9 rounded-full object-cover">
-                <div class="overflow-hidden">
-                    <h3 id="chat-target-name" class="font-bold text-sm text-[#e9edef] truncate">Contato</h3>
-                    <span id="chat-target-number" class="text-[11px] text-muted block font-mono">#0000</span>
+            <div class="flex items-center gap-2 overflow-hidden flex-1">
+                <img id="chat-target-avatar" src="" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                <div class="overflow-hidden flex flex-col max-w-[120px]">
+                    <span id="chat-target-name" class="font-bold text-sm text-[#e9edef] truncate">Contato</span>
+                    <span id="chat-target-number" class="text-[10px] text-muted block font-mono">#0000</span>
                 </div>
             </div>
-            <button id="btn-chat-menu" class="text-muted hover:text-white p-2 relative">
-                <i class="fas fa-ellipsis-v"></i>
-                <div id="dropdown-chat" class="hide absolute top-10 right-0 w-44 wa-header border wa-border rounded shadow-xl z-30 py-1 text-sm text-left font-normal">
-                    <button id="menu-chat-edit" class="w-full text-left px-4 py-2.5 hover:bg-[#111b21]">Editar Nome</button>
-                    <button id="menu-chat-clear" class="w-full text-left px-4 py-2.5 hover:bg-[#111b21]">Limpar Conversa</button>
-                    <button id="menu-chat-delete" class="w-full text-left px-4 py-2.5 hover:bg-[#111b21] text-red-400">Excluir Contato</button>
-                </div>
-            </button>
+            
+            <div class="flex items-center gap-2.5 text-muted text-base">
+                <button id="header-btn-edit" title="Editar nome" class="hover:text-white p-1">
+                    <i class="fas fa-pen text-xs"></i>
+                </button>
+                <button id="header-btn-clear" title="Limpar Conversa" class="hover:text-white p-1">
+                    <i class="fas fa-broom text-sm"></i>
+                </button>
+                <button id="header-btn-delete" title="Excluir Contato" class="hover:text-red-400 p-1">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+                <span class="text-gray-600 self-center">|</span>
+                <button id="header-btn-back" title="Sair da conversa" class="hover:text-white p-1 pl-0.5">
+                    <i class="fas fa-door-open text-sm"></i>
+                </button>
+            </div>
         </header>
 
         <div class="flex-1 relative overflow-hidden">
@@ -215,6 +235,7 @@
         let unsubChatMessages = null;
         let unsubContactsList = null;
 
+        const scrLoading = document.getElementById("screen-loading");
         const scrAuth = document.getElementById("screen-auth");
         const scrRegister = document.getElementById("screen-register");
         const scrMainList = document.getElementById("screen-main-list");
@@ -233,17 +254,16 @@
         const contactsStackList = document.getElementById("contacts-stack-list");
         const btnTriggerAddContact = document.getElementById("btn-trigger-add-contact");
 
-        const btnChatBack = document.getElementById("btn-chat-back");
         const imgChatTargetAvatar = document.getElementById("chat-target-avatar");
         const txtChatTargetName = document.getElementById("chat-target-name");
         const txtChatTargetNumber = document.getElementById("chat-target-number");
-        const btnChatMenu = document.getElementById("btn-chat-menu");
-        const dropdownChat = document.getElementById("dropdown-chat");
-        const menuChatEdit = document.getElementById("menu-chat-edit");
-        const menuChatClear = document.getElementById("menu-chat-clear");
-        const menuChatDelete = document.getElementById("menu-chat-delete");
         const chatMessagesContainer = document.getElementById("chat-messages-container");
         const inputChatMessage = document.getElementById("chat-message-input");
+
+        const headerBtnEdit = document.getElementById("header-btn-edit");
+        const headerBtnClear = document.getElementById("header-btn-clear");
+        const headerBtnDelete = document.getElementById("header-btn-delete");
+        const headerBtnBack = document.getElementById("header-btn-back");
 
         const modalAddContact = document.getElementById("modal-add-contact");
         const inputAddContactName = document.getElementById("add-contact-name");
@@ -264,7 +284,16 @@
         const btnCancelEditContact = document.getElementById("btn-cancel-edit-contact");
         const btnSaveEditContact = document.getElementById("btn-save-edit-contact");
 
+        function showLoading() {
+            scrLoading.classList.remove("hide");
+        }
+
+        function hideLoading() {
+            scrLoading.classList.add("hide");
+        }
+
         onAuthStateChanged(auth, async (user) => {
+            showLoading();
             if (user) {
                 const snapshot = await get(ref(db, `clone_zap/users/${user.uid}`));
                 if (snapshot.exists()) {
@@ -277,13 +306,16 @@
             } else {
                 showScreen("auth");
             }
+            hideLoading();
         });
 
         btnGoogleLogin.addEventListener("click", async () => {
+            showLoading();
             try {
                 await signInWithPopup(auth, provider);
             } catch (err) {
                 alert("Erro no login: " + err.message);
+                hideLoading();
             }
         });
 
@@ -295,6 +327,7 @@
                 return alert("Insira um nome válido e um número de 4 dígitos!");
             }
 
+            showLoading();
             const user = auth.currentUser;
             myAccountData = {
                 uid: user.uid,
@@ -308,6 +341,7 @@
             
             showScreen("main-list");
             bindContactsRealtime();
+            hideLoading();
         });
 
         function showScreen(screen) {
@@ -330,17 +364,12 @@
             dropdownMain.classList.toggle("hide");
         });
 
-        btnChatMenu.addEventListener("click", (e) => {
-            e.stopPropagation();
-            dropdownChat.classList.toggle("hide");
-        });
-
         document.addEventListener("click", () => {
             dropdownMain.classList.add("hide");
-            dropdownChat.classList.add("hide");
         });
 
         menuLogout.addEventListener("click", () => {
+            showLoading();
             if(unsubContactsList) unsubContactsList();
             if(unsubChatMessages) unsubChatMessages();
             signOut(auth);
@@ -369,6 +398,7 @@
             const newName = inputEditProfileName.value.trim();
             if (!newName) return alert("O nome não pode ser vazio!");
 
+            showLoading();
             myAccountData.name = newName;
             myAccountData.avatar = imgEditProfileAvatar.src;
 
@@ -379,6 +409,7 @@
 
             imgMainMyAvatar.src = myAccountData.avatar;
             modalEditProfile.classList.add("hide");
+            hideLoading();
         });
 
         btnTriggerAddContact.addEventListener("click", () => {
@@ -401,8 +432,10 @@
                 return alert("Você não pode adicionar seu próprio número!");
             }
 
+            showLoading();
             const dirSnap = await get(ref(db, `clone_zap/directory/${contactNum}`));
             if (!dirSnap.exists()) {
+                hideLoading();
                 return alert("Nenhum usuário encontrado com esse número no Clone Zap!");
             }
 
@@ -415,6 +448,7 @@
             });
 
             modalAddContact.classList.add("hide");
+            hideLoading();
         });
 
         function bindContactsRealtime() {
@@ -457,7 +491,10 @@
                         </div>
                     `;
 
-                    block.addEventListener("click", () => openChatWith(targetUid, cInfo.savedName, cInfo.number, dynamicAvatar));
+                    block.addEventListener("click", () => {
+                        showLoading();
+                        openChatWith(targetUid, cInfo.savedName, cInfo.number, dynamicAvatar);
+                    });
                     contactsStackList.appendChild(block);
                 }
             });
@@ -475,10 +512,12 @@
             listenChatMessages();
         }
 
-        btnChatBack.addEventListener("click", () => {
+        headerBtnBack.addEventListener("click", () => {
+            showLoading();
             if (unsubChatMessages) unsubChatMessages();
             showScreen("main-list");
             bindContactsRealtime();
+            hideLoading();
         });
 
         function listenChatMessages() {
@@ -486,21 +525,22 @@
 
             unsubChatMessages = onValue(ref(db, `clone_zap/chats/${currentActiveChatId}`), (snapshot) => {
                 chatMessagesContainer.innerHTML = "";
-                if (!snapshot.exists()) return;
-
-                const messages = snapshot.val();
-                Object.values(messages).forEach(m => {
-                    const isMe = m.senderId === myAccountData.uid;
-                    const container = document.createElement("div");
-                    container.className = `max-w-[75%] rounded-lg p-2 px-3 text-xs relative shadow-sm break-words ${isMe ? "wa-outgoing self-end rounded-tr-none" : "wa-incoming self-start rounded-tl-none"}`;
-                    
-                    container.innerHTML = `
-                        <p class="text-white text-[13px] leading-relaxed pr-8">${m.text}</p>
-                        <span class="absolute bottom-1 right-1.5 text-[9px] text-muted font-medium">${m.time}</span>
-                    `;
-                    chatMessagesContainer.appendChild(container);
-                });
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                if (snapshot.exists()) {
+                    const messages = snapshot.val();
+                    Object.values(messages).forEach(m => {
+                        const isMe = m.senderId === myAccountData.uid;
+                        const container = document.createElement("div");
+                        container.className = `max-w-[75%] rounded-lg p-2 px-3 text-xs relative shadow-sm break-words ${isMe ? "wa-outgoing self-end rounded-tr-none" : "wa-incoming self-start rounded-tl-none"}`;
+                        
+                        container.innerHTML = `
+                            <p class="text-white text-[13px] leading-relaxed pr-8">${m.text}</p>
+                            <span class="absolute bottom-1 right-1.5 text-[9px] text-muted font-medium">${m.time}</span>
+                        `;
+                        chatMessagesContainer.appendChild(container);
+                    });
+                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                }
+                hideLoading();
             });
         }
 
@@ -522,7 +562,7 @@
             }
         });
 
-        menuChatEdit.addEventListener("click", () => {
+        headerBtnEdit.addEventListener("click", () => {
             inputEditContactName.value = txtChatTargetName.innerText;
             modalEditContact.classList.remove("hide");
         });
@@ -533,26 +573,32 @@
             const updatedName = inputEditContactName.value.trim();
             if (!updatedName) return alert("O nome não pode ser vazio!");
 
+            showLoading();
             await update(ref(db, `clone_zap/contacts/${myAccountData.uid}/${selectedContactUid}`), {
                 savedName: updatedName
             });
 
             txtChatTargetName.innerText = updatedName;
             modalEditContact.classList.add("hide");
+            hideLoading();
         });
 
-        menuChatClear.addEventListener("click", async () => {
+        headerBtnClear.addEventListener("click", async () => {
             if (confirm("Deseja apagar o histórico dessa conversa para ambos?")) {
+                showLoading();
                 await remove(ref(db, `clone_zap/chats/${currentActiveChatId}`));
+                hideLoading();
             }
         });
 
-        menuChatDelete.addEventListener("click", async () => {
+        headerBtnDelete.addEventListener("click", async () => {
             if (confirm("Deseja excluir este contato da sua lista?")) {
+                showLoading();
                 if (unsubChatMessages) unsubChatMessages();
                 await remove(ref(db, `clone_zap/contacts/${myAccountData.uid}/${selectedContactUid}`));
                 showScreen("main-list");
                 bindContactsRealtime();
+                hideLoading();
             }
         });
     </script>
