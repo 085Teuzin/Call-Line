@@ -2,193 +2,173 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Família Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .dark {
-            --bg-main: #111827;
-            --bg-card: #1f2937;
-            --text-main: #f9fafb;
-            --text-muted: #9ca3af;
-            --border: #374151;
-            --chat-bg: #111827;
-            --msg-in: #374151;
-            --msg-out: #047857;
-        }
-        .light {
-            --bg-main: #f3f4f6;
-            --bg-card: #ffffff;
-            --text-main: #111827;
-            --text-muted: #6b7280;
-            --border: #e5e7eb;
-            --chat-bg: #efeae2;
-            --msg-in: #ffffff;
-            --msg-out: #d9fdd3;
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131c2e;
+            --text-main: #f3f4f6;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --chat-bg: #070a12;
+            --msg-in: #1e293b;
+            --msg-out: #065f46;
+            --accent: #10b981;
         }
         body {
             background-color: var(--bg-main);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         .app-card { background-color: var(--bg-card); border-color: var(--border); }
         .text-muted { color: var(--text-muted); }
         .border-custom { border-color: var(--border); }
         .chat-area { background-color: var(--chat-bg); }
         .msg-in { background-color: var(--msg-in); color: var(--text-main); }
-        .msg-out { background-color: var(--msg-out); color: #111827; }
+        .msg-out { background-color: var(--msg-out); color: #ffffff; }
         .hide { display: none !important; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
     </style>
 </head>
-<body class="light h-screen w-screen overflow-hidden flex flex-col justify-between">
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between antialiased selection:bg-emerald-500/30">
 
-    <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6">
-        <div class="app-card w-full max-w-sm p-6 rounded-2xl shadow-xl border flex flex-col items-center text-center">
-            <div class="w-20 h-20 bg-emerald-600 rounded-2xl flex items-center justify-center text-white text-4xl shadow-lg mb-4">
-                <i class="fas fa-users-rectangle"></i>
+    <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-4">
+        <div class="app-card w-full max-w-sm p-6 border-2 flex flex-col items-center text-center shadow-[4px_4px_0px_0px_rgba(16,185,129,0.2)]">
+            <div class="w-16 h-16 bg-emerald-600 border-2 border-emerald-400 flex items-center justify-center text-white text-3xl mb-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]">
+                <i class="fas fa-terminal"></i>
             </div>
-            <h1 class="text-2xl font-black mb-2">Família Chat</h1>
-            <p class="text-muted text-sm mb-6">Seu espaço seguro, privado e exclusivo para conversar com quem importa.</p>
+            <h1 class="text-xl font-black uppercase tracking-wider mb-1">Família Chat</h1>
+            <p class="text-muted text-xs mb-6 uppercase tracking-tight">[ Conexão Privada Familiar ]</p>
             
-            <div class="w-full text-left mb-4">
-                <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-muted">Como a família te chama?</label>
-                <input type="text" id="login-nickname" placeholder="Ex: Tio João, Aninha..." class="w-full p-3 rounded-xl border border-custom bg-transparent outline-none focus:border-emerald-500 transition">
+            <div class="w-full text-left mb-5">
+                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 text-emerald-500">// Identificação</label>
+                <input type="text" id="login-nickname" placeholder="Ex: Tio Joao" class="w-full p-3 border-2 border-custom bg-black/40 text-sm font-bold outline-none focus:border-emerald-500 text-white placeholder:text-slate-700">
             </div>
 
-            <button id="btn-login" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl flex items-center justify-center gap-3 shadow-md transition">
-                <i class="fab fa-google text-lg"></i> Entrar com o Google
+            <button id="btn-login" class="w-full bg-emerald-600 hover:bg-emerald-700 active:translate-y-0.5 text-white font-black uppercase text-xs p-3.5 border-2 border-emerald-400 flex items-center justify-center gap-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.4)] transition-all">
+                <i class="fab fa-google text-sm"></i> Vincular Conta Google
             </button>
         </div>
     </div>
 
-    <div id="screen-lobby" class="hide flex-1 flex flex-col p-4 max-w-md mx-auto w-full justify-center">
-        <div class="app-card rounded-2xl p-6 border shadow-xl w-full">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-3">
-                    <img id="lobby-avatar" src="" class="w-10 h-10 rounded-full border border-custom object-cover">
-                    <div>
-                        <h2 class="font-bold text-sm leading-tight" id="lobby-welcome">Olá</h2>
-                        <span class="text-xs text-muted">Acessar uma sala</span>
-                    </div>
+    <div id="screen-lobby" class="hide flex-1 flex flex-col p-4 max-w-sm mx-auto w-full justify-center">
+        <div class="app-card border-2 p-5 shadow-[4px_4px_0px_0px_rgba(16,185,129,0.15)] w-full">
+            <div class="flex items-center gap-3 border-b-2 border-custom pb-4 mb-5">
+                <img id="lobby-avatar" src="" class="w-10 h-10 border-2 border-custom object-cover">
+                <div class="overflow-hidden">
+                    <span class="text-[9px] text-emerald-500 font-bold block uppercase tracking-wider">// Usuário Ativo</span>
+                    <h2 class="font-black text-sm truncate uppercase tracking-tight" id="lobby-welcome">...</h2>
                 </div>
-                <button id="btn-toggle-theme-lobby" class="w-9 h-9 rounded-xl border border-custom flex items-center justify-center text-muted">
-                    <i class="fas fa-moon"></i>
-                </button>
             </div>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-muted">Nome da Sala</label>
-                    <input type="text" id="room-name" placeholder="Ex: almoco-domingo" class="w-full p-3 rounded-xl border border-custom bg-transparent outline-none focus:border-emerald-500 transition">
+                    <label class="block text-[10px] font-black uppercase tracking-widest mb-1 text-muted">ID da Sala (Sem espaços)</label>
+                    <input type="text" id="room-name" placeholder="Ex: sala-principal" class="w-full p-2.5 border-2 border-custom bg-black/40 text-sm font-bold outline-none focus:border-emerald-500 text-white uppercase placeholder:text-slate-700">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-muted">Senha de Acesso</label>
-                    <input type="password" id="room-pass" placeholder="••••••••" class="w-full p-3 rounded-xl border border-custom bg-transparent outline-none focus:border-emerald-500 transition">
+                    <label class="block text-[10px] font-black uppercase tracking-widest mb-1 text-muted">Chave de Segurança</label>
+                    <input type="password" id="room-pass" placeholder="••••••••" class="w-full p-2.5 border-2 border-custom bg-black/40 text-sm font-bold outline-none focus:border-emerald-500 text-white placeholder:text-slate-700">
                 </div>
-                <button id="btn-join-room" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl shadow-md transition">
-                    Entrar ou Criar Sala
+                <button id="btn-join-room" class="w-full bg-emerald-600 hover:bg-emerald-700 active:translate-y-0.5 text-white font-black uppercase text-xs p-3 border-2 border-emerald-400 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] transition-all">
+                    Acessar / Gerar Canal
                 </button>
-                <button id="btn-logout" class="w-full bg-transparent border border-red-500/30 text-red-500 font-medium p-2 rounded-xl text-sm transition mt-2">
-                    Sair da Conta
+                <button id="btn-logout" class="w-full bg-transparent border-2 border-dashed border-red-500/40 hover:border-red-500 text-red-500/80 hover:text-red-500 font-bold uppercase text-[10px] p-2 transition-all mt-2">
+                    Desconectar Sistema
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="screen-chat" class="hide flex-1 flex flex-col h-full w-full max-w-md mx-auto relative app-card border-x">
-        <header class="h-16 px-4 border-b border-custom flex items-center justify-between z-10">
+    <div id="screen-chat" class="hide flex-1 flex flex-col h-full w-full max-w-md mx-auto relative app-card border-x-2">
+        <header class="h-14 px-3 border-b-2 border-custom flex items-center justify-between z-10 bg-slate-900/40 backdrop-blur-md">
             <div class="flex items-center gap-3 overflow-hidden">
-                <button id="btn-back-lobby" class="text-muted text-lg pr-1">
-                    <i class="fas fa-arrow-left"></i>
+                <button id="btn-back-lobby" class="text-muted hover:text-white px-1">
+                    <i class="fas fa-chevron-left"></i>
                 </button>
                 <div class="overflow-hidden">
-                    <h3 id="chat-room-title" class="font-bold text-base truncate">Nome da Sala</h3>
-                    <span id="chat-user-role" class="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500 tracking-wider">Membro</span>
+                    <h3 id="chat-room-title" class="font-black text-sm uppercase tracking-wider truncate">SALA</h3>
+                    <span id="chat-user-role" class="text-[8px] font-black px-1.5 py-0.5 border tracking-widest uppercase">MEMBRO</span>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button id="btn-toggle-theme-chat" class="w-9 h-9 rounded-xl flex items-center justify-center text-muted">
-                    <i class="fas fa-moon"></i>
-                </button>
-                <button id="btn-open-panel" class="w-9 h-9 rounded-xl flex items-center justify-center text-muted">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-            </div>
+            <button id="btn-open-panel" class="w-9 h-9 border-2 border-custom flex items-center justify-center text-muted hover:text-white bg-black/20">
+                <i class="fas fa-sliders-h text-xs"></i>
+            </button>
         </header>
 
-        <div id="chat-messages" class="flex-1 chat-area p-4 overflow-y-auto space-y-3 flex flex-col"></div>
+        <div id="chat-messages" class="flex-1 chat-area p-3 overflow-y-auto space-y-3 flex flex-col"></div>
 
-        <div id="reply-preview" class="hide px-4 py-2 bg-emerald-500/10 border-t border-custom flex items-center justify-between text-xs">
-            <div class="border-l-4 border-emerald-500 pl-2 overflow-hidden">
-                <span class="font-bold block text-emerald-600" id="reply-user">Respondendo a</span>
-                <p class="text-muted truncate" id="reply-text">Conteúdo</p>
+        <div id="reply-preview" class="hide px-3 py-2 bg-emerald-500/10 border-t-2 border-custom flex items-center justify-between text-xs">
+            <div class="border-l-2 border-emerald-500 pl-2 overflow-hidden">
+                <span class="font-black block text-emerald-400 text-[9px] uppercase tracking-wider" id="reply-user">RESPONDENDO A</span>
+                <p class="text-muted truncate text-[11px]" id="reply-text">...</p>
             </div>
-            <button id="btn-cancel-reply" class="text-muted text-sm px-1">
+            <button id="btn-cancel-reply" class="text-muted hover:text-white text-xs px-1">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <div class="p-3 border-t border-custom flex items-end gap-2 z-10">
-            <div class="flex-1 bg-transparent app-card border border-custom rounded-2xl p-2 min-h-[44px] flex flex-col justify-end">
-                <div id="edit-indicator" class="hide text-[10px] font-bold text-amber-500 px-2 pb-1 flex justify-between items-center">
-                    <span>EDITANDO MENSAGEM</span>
+        <div class="p-2 border-t-2 border-custom flex items-end gap-2 bg-slate-900/20 z-10">
+            <div class="flex-1 bg-black/40 border-2 border-custom p-1.5 min-h-[40px] flex flex-col justify-end">
+                <div id="edit-indicator" class="hide text-[8px] font-black text-amber-500 px-1 pb-1 flex justify-between items-center tracking-widest">
+                    <span>// MODO EDIÇÃO</span>
                     <button id="btn-cancel-edit" class="text-muted font-normal text-xs"><i class="fas fa-times"></i></button>
                 </div>
-                <textarea id="msg-input" rows="1" placeholder="Mensagem" class="w-full bg-transparent outline-none resize-none px-2 max-h-24 overflow-y-auto text-sm" style="line-height: 20px;"></textarea>
+                <textarea id="msg-input" rows="1" placeholder="Digite aqui..." class="w-full bg-transparent outline-none resize-none px-1 max-h-24 overflow-y-auto text-xs font-bold text-white placeholder:text-slate-700" style="line-height: 16px;"></textarea>
             </div>
-            <button id="btn-send" class="w-11 h-11 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-md flex-shrink-0">
-                <i class="fas fa-paper-plane text-sm ml-0.5"></i>
+            <button id="btn-send" class="w-10 h-10 bg-emerald-600 hover:bg-emerald-700 border-2 border-emerald-400 flex items-center justify-center text-white flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]">
+                <i class="fas fa-arrow-right text-xs"></i>
             </button>
         </div>
 
-        <div id="modal-panel" class="hide absolute inset-0 bg-black/60 z-20 flex items-end">
-            <div class="w-full app-card rounded-t-3xl border-t p-6 space-y-6 transform translate-y-0 transition-transform">
-                <div class="flex justify-between items-center">
-                    <h4 class="font-black text-lg">Detalhes da Sala</h4>
-                    <button id="btn-close-panel" class="w-8 h-8 rounded-full border border-custom flex items-center justify-center text-muted">
+        <div id="modal-panel" class="hide absolute inset-0 bg-black/80 z-20 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div class="w-full max-w-sm app-card border-2 p-5 space-y-5 shadow-[6px_6px_0px_0px_rgba(16,185,129,0.2)]">
+                <div class="flex justify-between items-center border-b-2 border-custom pb-2">
+                    <h4 class="font-black text-xs uppercase tracking-widest text-emerald-500">// PARÂMETROS DA SALA</h4>
+                    <button id="btn-close-panel" class="w-6 h-6 border border-custom flex items-center justify-center text-muted hover:text-white text-xs bg-black/20">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
                 <div class="space-y-4">
-                    <div class="flex items-center gap-4 border-b border-custom pb-4">
-                        <div class="relative group">
-                            <img id="panel-user-avatar" src="" class="w-14 h-14 rounded-full object-cover border border-custom">
-                            <label for="upload-avatar" class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer text-xs transition">
-                                <i class="fas fa-camera"></i>
+                    <div class="flex items-center gap-3 bg-black/20 p-2 border border-custom">
+                        <div class="relative group w-11 h-11 border border-custom flex-shrink-0">
+                            <img id="panel-user-avatar" src="" class="w-full h-full object-cover">
+                            <label for="upload-avatar" class="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] transition-all">
+                                <i class="fas fa-pen"></i>
                             </label>
                             <input type="file" id="upload-avatar" accept="image/*" class="hidden">
                         </div>
-                        <div>
-                            <span class="text-xs text-muted block font-bold uppercase tracking-wider">Seu Perfil Local</span>
-                            <div class="flex items-center gap-2">
-                                <span id="panel-user-name" class="font-bold text-base">Nome</span>
-                            </div>
+                        <div class="overflow-hidden">
+                            <span class="text-[8px] text-muted block font-black uppercase tracking-wider">Identidade Local</span>
+                            <span id="panel-user-name" class="font-bold text-xs text-white truncate block">...</span>
                         </div>
                     </div>
 
-                    <div id="adm-controls" class="hide space-y-4">
-                        <div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-xs text-amber-500 font-bold flex items-center gap-2">
-                            <i class="fas fa-shield-alt"></i> Você é o Administrador desta sala.
+                    <div id="adm-controls" class="hide space-y-3 pt-1 border-t border-dashed border-custom">
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-2 text-[9px] text-amber-500 font-black uppercase tracking-wider">
+                            <i class="fas fa-shield-alt mr-1"></i> Modo Administrador Ativo
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-muted">Gerenciar Nome da Sala</label>
+                            <label class="block text-[9px] font-black uppercase tracking-widest mb-1 text-muted">Alterar Nome do Canal</label>
                             <div class="flex gap-2">
-                                <input type="text" id="panel-room-rename" class="flex-1 p-2.5 text-sm rounded-xl border border-custom bg-transparent outline-none focus:border-emerald-500">
-                                <button id="btn-room-rename" class="bg-emerald-600 text-white font-bold px-4 text-sm rounded-xl">Salvar</button>
+                                <input type="text" id="panel-room-rename" class="flex-1 p-2 text-xs border border-custom bg-black/40 font-bold uppercase text-white outline-none focus:border-emerald-500">
+                                <button id="btn-room-rename" class="bg-emerald-600 hover:bg-emerald-700 border border-emerald-400 text-white font-black px-3 text-[10px] uppercase">OK</button>
                             </div>
                         </div>
-                        <div class="pt-2">
-                            <button id="btn-room-clear" class="w-full bg-red-600/10 border border-red-600/20 text-red-500 font-bold p-3 rounded-xl text-sm flex items-center justify-center gap-2">
-                                <i class="fas fa-trash-alt"></i> Limpar Todo o Histórico
-                            </button>
-                        </div>
+                        <button id="btn-room-clear" class="w-full bg-red-950/20 border border-red-500/40 hover:border-red-500 text-red-400 hover:text-red-500 font-black p-2 text-[10px] uppercase tracking-wider transition-all">
+                            <i class="fas fa-trash-alt mr-1"></i> Expurgar Histórico de Mensagens
+                        </button>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-muted">Membros Conectados</label>
-                        <div id="panel-members-list" class="max-h-40 overflow-y-auto space-y-2 pr-1"></div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-muted">// Integrantes na Sala</label>
+                        <div id="panel-members-list" class="max-h-32 overflow-y-auto space-y-1 pr-1 border border-custom p-1 bg-black/20"></div>
                     </div>
                 </div>
             </div>
@@ -266,34 +246,6 @@
         const btnRoomClear = document.getElementById("btn-room-clear");
         const panelMembersList = document.getElementById("panel-members-list");
 
-        const btnThemeLobby = document.getElementById("btn-toggle-theme-lobby");
-        const btnThemeChat = document.getElementById("btn-toggle-theme-chat");
-
-        function setupTheme() {
-            const saved = localStorage.getItem("theme") || "light";
-            document.body.className = `${saved} h-screen w-screen overflow-hidden flex flex-col justify-between`;
-            const updateIcons = () => {
-                const icon = saved === "dark" ? "<i class='fas fa-sun'></i>" : "<i class='fas fa-moon'></i>";
-                btnThemeLobby.innerHTML = icon;
-                btnThemeChat.innerHTML = icon;
-            };
-            updateIcons();
-        }
-
-        function toggleTheme() {
-            const isDark = document.body.classList.contains("dark");
-            const next = isDark ? "light" : "dark";
-            localStorage.setItem("theme", next);
-            document.body.className = `${next} h-screen w-screen overflow-hidden flex flex-col justify-between`;
-            const icon = next === "dark" ? "<i class='fas fa-sun'></i>" : "<i class='fas fa-moon'></i>";
-            btnThemeLobby.innerHTML = icon;
-            btnThemeChat.innerHTML = icon;
-        }
-
-        btnThemeLobby.addEventListener("click", toggleTheme);
-        btnThemeChat.addEventListener("click", toggleTheme);
-        setupTheme();
-
         msgInput.addEventListener("input", () => {
             msgInput.style.height = "auto";
             msgInput.style.height = msgInput.scrollHeight + "px";
@@ -316,7 +268,7 @@
 
         btnLogin.addEventListener("click", async () => {
             const nickname = inputLoginNick.value.trim();
-            if (!nickname) return alert("Por favor, digite seu apelido familiar primeiro!");
+            if (!nickname) return alert("Digite seu apelido familiar!");
 
             try {
                 const result = await signInWithPopup(auth, provider);
@@ -332,7 +284,7 @@
                 await set(ref(db, `users/${user.uid}`), currentUser);
                 showScreen("lobby");
             } catch (err) {
-                alert("Erro na autenticação: " + err.message);
+                alert("Falha: " + err.message);
             }
         });
 
@@ -352,7 +304,7 @@
                 scrLogin.classList.remove("hide");
             } else if (screen === "lobby") {
                 scrLobby.classList.remove("hide");
-                lobbyWelcome.innerText = `Olá, ${currentUser.name}!`;
+                lobbyWelcome.innerText = currentUser.name;
                 lobbyAvatar.src = currentUser.avatar;
             } else if (screen === "chat") {
                 scrChat.classList.remove("hide");
@@ -363,7 +315,7 @@
             const rawRoom = inputRoomName.value.trim().toLowerCase();
             const pass = inputRoomPass.value.trim();
 
-            if (!rawRoom || !pass) return alert("Preencha o nome da sala e a senha!");
+            if (!rawRoom || !pass) return alert("Preencha todos os campos!");
             const roomName = rawRoom.replace(/[^a-z0-9_-]/g, "");
 
             const roomRef = ref(db, `rooms/${roomName}`);
@@ -382,7 +334,7 @@
             } else {
                 const roomData = snapshot.val();
                 if (roomData.meta.password !== pass) {
-                    return alert("Senha incorreta para esta sala da família!");
+                    return alert("Chave de segurança incorreta!");
                 }
                 const role = roomData.meta.createdBy === currentUser.uid ? "ADM" : "Membro";
                 enterRoom(roomName, role);
@@ -396,9 +348,9 @@
             chatRoomTitle.innerText = roomName;
             chatUserRole.innerText = role;
             if(role === "ADM") {
-                chatUserRole.className = "text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 tracking-wider";
+                chatUserRole.className = "text-[8px] font-black px-1.5 py-0.5 border border-amber-500 bg-amber-500/10 text-amber-500 tracking-widest uppercase";
             } else {
-                chatUserRole.className = "text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500 tracking-wider";
+                chatUserRole.className = "text-[8px] font-black px-1.5 py-0.5 border border-emerald-500 bg-emerald-500/10 text-emerald-500 tracking-widest uppercase";
             }
 
             panelUserName.innerText = currentUser.name;
@@ -443,7 +395,7 @@
                 
                 if (!users[currentUser.uid]) {
                     exitRoomForce();
-                    alert("Você foi removido desta sala pelo Administrador.");
+                    alert("Você foi removido da sala.");
                     return;
                 }
 
@@ -453,17 +405,17 @@
                 panelMembersList.innerHTML = "";
                 Object.values(users).forEach(u => {
                     const item = document.createElement("div");
-                    item.className = "flex items-center justify-between bg-black/5 p-2 rounded-xl border border-custom text-sm";
+                    item.className = "flex items-center justify-between bg-black/40 p-2 border border-custom text-xs";
                     
                     let kickBtn = "";
                     if (userRole === "ADM" && u.uid !== currentUser.uid) {
-                        kickBtn = `<button class="text-red-500 text-xs font-bold px-2 py-1 border border-red-500/20 rounded-lg bg-red-500/5 btn-kick" data-uid="${u.uid}"><i class="fas fa-user-slash"></i> Banir</button>`;
+                        kickBtn = `<button class="text-red-400 hover:text-red-500 text-[9px] font-black border border-red-500/20 px-1.5 py-0.5 uppercase bg-red-500/5 btn-kick" data-uid="${u.uid}">Banir</button>`;
                     }
 
                     item.innerHTML = `
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <img src="${u.avatar}" class="w-7 h-7 rounded-full object-cover">
-                            <span class="font-bold truncate">${u.name} <span class="text-[9px] text-muted">(${u.role})</span></span>
+                        <div class="flex items-center gap-2 overflow-hidden pr-1">
+                            <img src="${u.avatar}" class="w-6 h-6 border border-custom object-cover">
+                            <span class="font-bold truncate text-slate-300">${u.name} <span class="text-[8px] text-muted">[${u.role}]</span></span>
                         </div>
                         ${kickBtn}
                     `;
@@ -488,14 +440,14 @@
                     const isMe = m.senderId === currentUser.uid;
                     
                     const msgDiv = document.createElement("div");
-                    msgDiv.className = `max-w-[85%] rounded-2xl p-3 shadow-sm relative group flex flex-col ${isMe ? "msg-out self-end rounded-tr-none" : "msg-in self-start rounded-tl-none"}`;
+                    msgDiv.className = `max-w-[88%] border p-2.5 relative group flex flex-col ${isMe ? "msg-out self-end border-emerald-500/40" : "msg-in self-start border-slate-700"}`;
                     
                     let replyMarkup = "";
                     if (m.replyTo) {
                         replyMarkup = `
-                            <div class="border-l-2 border-emerald-600 bg-black/5 px-2 py-1 rounded text-xs mb-1 opacity-80 pointer-events-none">
-                                <span class="font-bold block text-emerald-700 text-[10px]">${m.replyTo.user}</span>
-                                <p class="truncate">${m.replyTo.text}</p>
+                            <div class="border-l-2 border-emerald-400 bg-black/30 px-2 py-0.5 text-[10px] mb-1.5 opacity-80 pointer-events-none">
+                                <span class="font-black block text-emerald-400 text-[8px] uppercase">${m.replyTo.user}</span>
+                                <p class="truncate text-slate-400">${m.replyTo.text}</p>
                             </div>
                         `;
                     }
@@ -504,22 +456,20 @@
                     const canEdit = isMe;
                     const canDelete = isMe || userRole === "ADM";
 
-                    if (canEdit || canDelete || !isMe) {
-                        actionMenu = `
-                            <div class="absolute top-1 right-2 opacity-0 group-hover:opacity-100 flex gap-2 bg-black/40 px-2 py-1 rounded-lg text-[10px] text-white backdrop-blur-sm transition">
-                                <button class="act-reply" data-id="${id}" data-user="${m.senderName}" data-text="${m.text}"><i class="fas fa-reply"></i></button>
-                                ${canEdit ? `<button class="act-edit" data-id="${id}" data-text="${m.text}"><i class="fas fa-pen"></i></button>` : ""}
-                                ${canDelete ? `<button class="act-del" data-id="${id}"><i class="fas fa-trash"></i></button>` : ""}
-                            </div>
-                        `;
-                    }
+                    actionMenu = `
+                        <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1.5 bg-black/80 border border-custom px-1.5 py-0.5 text-[9px] text-white transition-all">
+                            <button class="act-reply" data-id="${id}" data-user="${m.senderName}" data-text="${m.text}"><i class="fas fa-reply text-slate-400"></i></button>
+                            ${canEdit ? `<button class="act-edit" data-id="${id}" data-text="${m.text}"><i class="fas fa-pen text-amber-500"></i></button>` : ""}
+                            ${canDelete ? `<button class="act-del" data-id="${id}"><i class="fas fa-trash text-red-400"></i></button>` : ""}
+                        </div>
+                    `;
 
                     msgDiv.innerHTML = `
                         ${replyMarkup}
-                        <span class="text-[10px] font-black text-emerald-700 block mb-0.5">${m.senderName}</span>
-                        <p class="text-sm whitespace-pre-wrap break-words pr-4">${m.text}</p>
-                        <div class="flex items-center justify-end gap-1 mt-1 self-end text-[9px] text-muted">
-                            ${m.edited ? "<span>(editada)</span>" : ""}
+                        <span class="text-[9px] font-black text-emerald-400 block mb-0.5 uppercase tracking-wide">${m.senderName}</span>
+                        <p class="text-xs whitespace-pre-wrap break-words pr-2 font-medium leading-relaxed">${m.text}</p>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[8px] text-muted font-bold self-end">
+                            ${m.edited ? "<span>[EDITADA]</span>" : ""}
                             <span>${m.time}</span>
                         </div>
                         ${actionMenu}
@@ -658,15 +608,14 @@
                 currentRoom = newName;
                 chatRoomTitle.innerText = newName;
                 listenRoom(newName);
-                alert("Sala renomeada com sucesso para toda a família!");
+                alert("Canal alterado!");
             }
         });
 
         btnRoomClear.addEventListener("click", async () => {
             if (userRole !== "ADM") return;
-            if (confirm("Tem certeza que deseja apagar permanentemente todas as mensagens desta sala?")) {
+            if (confirm("Limpar mensagens?")) {
                 await remove(ref(db, `rooms/${currentRoom}/messages`));
-                alert("Histórico limpo!");
             }
         });
     </script>
