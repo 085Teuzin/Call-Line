@@ -1,491 +1,632 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Chat Family</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --primary: #7C4DFF; --bg: #0a0a0a; --surface: #161616; --text: #E0E0E0; --text-dim: #888888; --border: #222222; }
-    body, html { width: 100%; height: 100%; background-color: var(--bg); color: var(--text); overflow: hidden; position: fixed; }
-    #app { display: flex; flex-direction: column; width: 100%; height: 100%; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
-    .screen { display: flex; flex-direction: column; justify-content: center; align-items: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 24px; z-index: 100; background: var(--bg); }
-    h1 { margin-bottom: 24px; font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(45deg, #BB86FC, #7C4DFF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .input-field { width: 100%; max-width: 320px; padding: 14px 20px; border: 1px solid var(--border); border-radius: 25px; margin-bottom: 16px; font-size: 1rem; text-align: center; outline: none; background-color: var(--surface); color: var(--text); }
-    .btn-main { width: 100%; max-width: 320px; padding: 14px; border: none; border-radius: 25px; background: linear-gradient(90deg, #7C4DFF, #6200EE); color: white; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-    #chat-screen { display: none; flex-direction: column; flex: 1; height: 100%; }
-    header { background-color: var(--surface); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-    header .title-text { font-weight: 600; font-size: 1.1rem; outline: none; padding: 4px 8px; border-radius: 8px; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    header .title-text:focus { background: rgba(255, 255, 255, 0.05); }
-    .avatar-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid var(--border); object-fit: cover; }
-    #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
-    .msg { max-width: 75%; padding: 8px 12px 20px 12px; border-radius: 16px; font-size: 0.95rem; line-height: 1.4; position: relative; word-wrap: break-word; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
-    .msg .sender { font-size: 0.75rem; font-weight: 600; margin-bottom: 2px; color: #BB86FC !important; display: block; }
-    .msg .timestamp { position: absolute; bottom: 4px; right: 10px; font-size: 0.65rem; color: var(--text-dim); }
-    .msg.received { background-color: var(--surface); align-self: flex-start; border-bottom-left-radius: 4px; }
-    .msg.sent { background-color: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-    .msg.sent .sender { color: #fff !important; }
-    .msg.sent .timestamp { color: rgba(255,255,255,0.7); }
-    .msg-system { align-self: center; font-size: 0.8rem; color: var(--text-dim); font-style: italic; background: transparent; padding: 0; }
-    .file-message { display: flex; flex-direction: column; gap: 6px; min-width: 160px; }
-    .img-preview { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; }
-    .btn-download { background: rgba(255, 255, 255, 0.1); color: inherit; border: none; padding: 6px; border-radius: 8px; font-size: 0.75rem; text-align: center; text-decoration: none; display: block; margin-top: 4px; }
-    audio { width: 100%; height: 40px; margin-top: 4px; display: block; }
-    .input-area { display: flex; padding: 12px; background-color: var(--surface); border-top: 1px solid var(--border); align-items: center; gap: 8px; }
-    .input-area input[type="text"] { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 20px; outline: none; font-size: 1rem; background-color: var(--bg); color: var(--text); }
-    .action-btn { background: none; border: none; width: 38px; height: 38px; color: var(--text); display: flex; justify-content: center; align-items: center; cursor: pointer; }
-    .action-btn svg { width: 22px; height: 22px; fill: currentColor; }
-    #btn-send { display: none; color: var(--primary); }
-    #btn-mic { color: #E53935; touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
-    #btn-mic.recording { animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
-    .modal-content { background: var(--surface); width: 100%; max-width: 300px; border-radius: 20px; padding: 20px; border: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; gap: 14px; }
-    .profile-img { width: 70px; height: 70px; border-radius: 50%; margin: 0 auto; border: 2px solid var(--primary); object-fit: cover; }
-    .profile-info { font-size: 0.9rem; color: var(--text-dim); }
-    .switch-container { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; margin: 6px 0; }
-    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 24px; }
-    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--primary); }
-    input:checked + .slider:before { transform: translateX(20px); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Família Web App</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        .theme-dark {
+            --bg-main: #000000;
+            --bg-surface: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+            --border-color: #333333;
+            --msg-me: #056162;
+            --msg-other: #262626;
+            --primary: #4caf50;
+            --danger: #d32f2f;
+        }
+
+        .theme-light {
+            --bg-main: #f0f2f5;
+            --bg-surface: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-main: #000000;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
+            --msg-me: #d9fdd3;
+            --msg-other: #ffffff;
+            --primary: #25d366;
+            --danger: #e53935;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body, html {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            background-color: var(--bg-main);
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .auth-container, .rooms-container {
+            margin: auto;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            background-color: var(--bg-surface);
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .auth-container h1, .rooms-container h2 { margin-bottom: 15px; }
+        .auth-container p { color: var(--text-muted); margin-bottom: 25px; }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            font-size: 16px;
+        }
+
+        .btn-primary { width: 100%; padding: 14px; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-secondary { width: 100%; padding: 10px; background-color: var(--border-color); color: var(--text-main); border: none; border-radius: 6px; margin-top: 10px; cursor: pointer;}
+        .btn-danger { width: 100%; padding: 10px; background-color: var(--danger); color: white; border: none; border-radius: 6px; margin-top: 10px; font-weight: bold; cursor: pointer;}
+        .btn-icon { background: none; border: none; color: var(--text-main); font-size: 24px; cursor: pointer; padding: 0 10px; }
+
+        .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .room-info-header { flex: 1; margin-left: 15px; cursor: pointer; }
+        .room-info-header span { display: block; }
+        #chat-room-status { font-size: 12px; color: var(--text-muted); }
+
+        .avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; }
+        .large-avatar { width: 90px; height: 90px; border-radius: 50%; margin-bottom: 15px; object-fit: cover; }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .msg-block {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            position: relative;
+            word-wrap: break-word;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .msg-block.me { background-color: var(--msg-me); align-self: flex-end; border-top-right-radius: 2px; }
+        .msg-block.other { background-color: var(--msg-other); align-self: flex-start; border-top-left-radius: 2px; border: 1px solid var(--border-color); }
+
+        .msg-author { font-size: 11px; font-weight: bold; color: var(--primary); display: block; margin-bottom: 3px; }
+        .msg-text { display: block; }
+        .msg-time { font-size: 10px; color: var(--text-muted); text-align: right; display: block; margin-top: 4px; }
+
+        .msg-quoted {
+            background: rgba(0,0,0,0.15);
+            border-left: 3px solid var(--primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            gap: 10px;
+        }
+
+        .chat-input-area input { flex: 1; margin-bottom: 0; }
+        .btn-send { background-color: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .reply-zone {
+            background-color: var(--bg-surface);
+            padding: 8px 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--primary);
+        }
+        .reply-content { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        #btn-cancel-reply { background: none; border: none; color: var(--text-main); font-size: 16px; cursor: pointer; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: var(--bg-surface);
+            padding: 25px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 360px;
+            text-align: center;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 18px; }
+        .list-container { max-height: 200px; overflow-y: auto; margin-top: 15px; text-align: left; }
+        .participant-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+
+        .context-menu {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background-color: var(--bg-surface);
+            border-top-left-radius: 16px; border-top-right-radius: 16px;
+            padding: 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+            z-index: 200;
+            gap: 10px; flex-direction: column;
+        }
+
+        .context-menu button {
+            width: 100%; padding: 14px; background-color: var(--bg-card); color: var(--text-main);
+            border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; cursor: pointer;
+        }
+        .context-menu #menu-delete { color: var(--danger); }
+    </style>
 </head>
-<body>
+<body class="theme-dark">
 
-  <div id="app">
-    <div id="lock-screen" class="screen" style="display: none;">
-      <h1>App Bloqueado</h1>
-      <input type="password" id="lock-pin" class="input-field" placeholder="Digite seu PIN" pattern="\d*" inputmode="numeric">
-      <button id="btn-unlock" class="btn-main">Acessar</button>
+    <div id="screen-login" class="screen active">
+        <div class="auth-container">
+            <h1>Família Chat</h1>
+            <p>Faça login para acessar o aplicativo da nossa família.</p>
+            <button id="btn-google-login" class="btn-primary">Entrar com o Google</button>
+        </div>
     </div>
 
-    <div id="login-screen" class="screen" style="display: none;">
-      <h1>Chat Family</h1>
-      <input type="text" id="username" class="input-field" placeholder="Seu nome" maxlength="15" autocomplete="off">
-      <button id="btn-google-login" class="btn-main">
-        <svg style="width:18px; height:18px; fill:currentColor" viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.997 0-.746-.08-1.32-.176-1.883H12.24z"/></svg>
-        Entrar com Google
-      </button>
+    <div id="screen-nickname" class="screen">
+        <div class="auth-container">
+            <h2>Como você quer ser chamado?</h2>
+            <input type="text" id="input-nickname" placeholder="Seu apelido ou nome...">
+            <button id="btn-save-nickname" class="btn-primary">Continuar</button>
+        </div>
     </div>
 
-    <div id="chat-screen">
-      <header>
-        <div class="title-text" id="group-title" contenteditable="true" spellcheck="false">Família</div>
-        <img src="" id="btn-profile" class="avatar-btn" alt="Perfil" style="display: none;">
-      </header>
-      
-      <div id="messages"></div>
-
-      <div class="input-area">
-        <button class="action-btn" id="btn-attach">
-          <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-3.31 2.69-6 6-6s6 2.69 6 6v11.5c0 4.42-3.58 8-8 8s-8-3.58-8-8V6h2v11.5c0 3.31 2.69 6 6 6s6-2.69 6-6V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 1.1.9 2 2 2s2-.9 2-2V6h2z"/></svg>
-        </button>
-        <input type="file" id="file-input" style="display: none;" accept="image/*,audio/*,video/*,application/pdf">
-        <input type="text" id="msg-input" placeholder="Mensagem..." autocomplete="off">
-        <button class="action-btn" id="btn-send">
-          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-        <button class="action-btn" id="btn-mic">
-          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
-        </button>
-      </div>
+    <div id="screen-rooms" class="screen">
+        <div class="header-bar">
+            <span class="app-title">Salas</span>
+            <img id="user-avatar-rooms" class="avatar" alt="Perfil">
+        </div>
+        <div class="rooms-container">
+            <h2>Entrar ou Criar Sala</h2>
+            <input type="text" id="room-name" placeholder="Nome da sala...">
+            <input type="password" id="room-pass" placeholder="Senha da sala...">
+            <button id="btn-enter-room" class="btn-primary">Acessar Sala</button>
+        </div>
     </div>
-  </div>
 
-  <div class="modal" id="profile-modal">
-    <div class="modal-content" style="position: relative;">
-      <img src="" id="modal-photo" class="profile-img">
-      <div id="modal-email" class="profile-info" style="font-size:0.8rem;">email@gmail.com</div>
-      
-      <input type="text" id="settings-username" class="input-field" placeholder="Seu Nome" style="margin-bottom:0;">
-      
-      <div class="switch-container">
-        <span>Bloquear App</span>
-        <label class="switch">
-          <input type="checkbox" id="chk-lock">
-          <span class="slider"></span>
-        </label>
-      </div>
-      
-      <button class="btn-main" id="btn-save-settings" style="background:#4CAF50;">Salvar</button>
-      <button class="btn-main" id="btn-logout" style="background:#E53935;">Sair</button>
+    <div id="screen-chat" class="screen">
+        <div class="header-bar">
+            <button id="btn-leave-room" class="btn-icon">←</button>
+            <div class="room-info-header" id="btn-room-details">
+                <span id="chat-room-title">Nome da Sala</span>
+                <span id="chat-room-status">Clique para detalhes</span>
+            </div>
+            <img id="user-avatar-chat" class="avatar" alt="Perfil">
+        </div>
+
+        <div id="chat-messages" class="messages-container"></div>
+
+        <div id="message-menu" class="context-menu">
+            <button id="menu-reply">Responder</button>
+            <button id="menu-edit">Editar</button>
+            <button id="menu-delete">Apagar para todos</button>
+            <button id="menu-cancel">Cancelar</button>
+        </div>
+
+        <div id="reply-preview" class="reply-zone" style="display: none;">
+            <div class="reply-content">
+                <small>Respondendo a <span id="reply-user"></span></small>
+                <p id="reply-text"></p>
+            </div>
+            <button id="btn-cancel-reply">✕</button>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem...">
+            <button id="btn-send" class="btn-send">Enviar</button>
+        </div>
     </div>
-  </div>
 
-  <div class="modal" id="pin-modal">
-    <div class="modal-content">
-      <h3>Definir PIN</h3>
-      <p style="font-size:0.8rem; color:var(--text-dim)">Digite apenas números</p>
-      <input type="password" id="new-pin-input" class="input-field" pattern="\d*" inputmode="numeric" placeholder="Novo PIN">
-      <button class="btn-main" id="btn-pin-confirm">Confirmar</button>
+    <div id="modal-profile" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-profile">✕</span>
+            <img id="modal-user-img" class="large-avatar" alt="Foto">
+            <h3 id="modal-user-name">Nome do Usuário</h3>
+            <p id="modal-user-email">email@gmail.com</p>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border-color);">
+            <button id="btn-toggle-theme" class="btn-secondary">Alternar Tema (Claro/Escuro)</button>
+            <button id="btn-logout" class="btn-danger">Sair da Conta</button>
+        </div>
     </div>
-  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    <div id="modal-room" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-room">✕</span>
+            <h3 id="info-room-name">Sala</h3>
+            
+            <div id="adm-controls" style="display: none; margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <h4 style="margin-bottom: 10px;">Painel do Administrador</h4>
+                <input type="text" id="new-room-name" placeholder="Mudar nome da sala">
+                <button id="btn-rename-room" class="btn-secondary">Salvar Novo Nome</button>
+                <button id="btn-clear-chat" class="btn-danger">Limpar Toda a Conversa</button>
+            </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDthwqD0CGFwDov-zfO-Hx6TD_y3lHsnoc",
-      authDomain: "teuzin-apps.firebaseapp.com",
-      databaseURL: "https://teuzin-apps-default-rtdb.firebaseio.com",
-      projectId: "teuzin-apps",
-      storageBucket: "teuzin-apps.firebasestorage.app",
-      messagingSenderId: "695505471506",
-      appId: "1:695505471506:web:efe322e605af4a30bfb0cb"
-    };
+            <h4 style="margin-top: 15px;">Participantes na Sala</h4>
+            <div id="participants-list" class="list-container"></div>
+        </div>
+    </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    const loginScreen = document.getElementById("login-screen");
-    const lockScreen = document.getElementById("lock-screen");
-    const chatScreen = document.getElementById("chat-screen");
-    const usernameInput = document.getElementById("username");
-    const msgInput = document.getElementById("msg-input");
-    const btnSend = document.getElementById("btn-send");
-    const btnMic = document.getElementById("btn-mic");
-    const messagesContainer = document.getElementById("messages");
-    const groupTitle = document.getElementById("group-title");
-    
-    const btnProfile = document.getElementById("btn-profile");
-    const profileModal = document.getElementById("profile-modal");
-    const modalPhoto = document.getElementById("modal-photo");
-    const modalEmail = document.getElementById("modal-email");
-    const settingsUsername = document.getElementById("settings-username");
-    const chkLock = document.getElementById("chk-lock");
-    
-    const lockPin = document.getElementById("lock-pin");
-    const pinModal = document.getElementById("pin-modal");
-    const newPinInput = document.getElementById("new-pin-input");
-
-    let currentUser = null;
-    let customDisplayName = localStorage.getItem("chat_family_custom_name") || "";
-    let mediaRecorder = null;
-    let audioChunks = [];
-
-    const isLockEnabled = localStorage.getItem("chat_family_lock_enabled") === "true";
-    if (isLockEnabled) {
-      lockScreen.style.display = "flex";
-      chatScreen.style.display = "none";
-      loginScreen.style.display = "none";
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        if (!customDisplayName) customDisplayName = user.displayName || "Membro";
-        
-        btnProfile.src = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
-        btnProfile.style.display = "block";
-        
-        if (!isLockEnabled) {
-          lockScreen.style.display = "none";
-          loginScreen.style.display = "none";
-          chatScreen.style.display = "flex";
-          initChat();
-        }
-      } else {
-        if (!isLockEnabled) {
-          loginScreen.style.display = "flex";
-          chatScreen.style.display = "none";
-        }
-      }
-    });
-
-    document.getElementById("btn-google-login").addEventListener("click", () => {
-      const nameTyped = usernameInput.value.trim();
-      if (!nameTyped) {
-        alert("Por favor, digite seu nome primeiro!");
-        return;
-      }
-      customDisplayName = nameTyped;
-      localStorage.setItem("chat_family_custom_name", nameTyped);
-      
-      signInWithPopup(auth, provider).catch(err => alert("Erro ao fazer login: " + err.message));
-    });
-
-    document.getElementById("btn-unlock").addEventListener("click", () => {
-      if (lockPin.value === localStorage.getItem("chat_family_pin")) {
-        lockScreen.style.display = "none";
-        if (auth.currentUser) {
-          chatScreen.style.display = "flex";
-          initChat();
-        } else {
-          loginScreen.style.display = "flex";
-        }
-      } else {
-        alert("PIN incorreto!");
-        lockPin.value = "";
-      }
-    });
-
-    window.addEventListener("click", (e) => {
-      if (e.target === profileModal) profileModal.style.display = "none";
-      if (e.target === pinModal) {
-        pinModal.style.display = "none";
-        chkLock.checked = localStorage.getItem("chat_family_lock_enabled") === "true";
-      }
-    });
-
-    btnProfile.addEventListener("click", () => {
-      if (!currentUser) return;
-      modalPhoto.src = currentUser.photoURL || "https://www.gravatar.com/avatar/?d=mp";
-      modalEmail.textContent = currentUser.email;
-      settingsUsername.value = customDisplayName;
-      chkLock.checked = localStorage.getItem("chat_family_lock_enabled") === "true";
-      profileModal.style.display = "flex";
-    });
-
-    document.getElementById("btn-save-settings").addEventListener("click", () => {
-      if (settingsUsername.value.trim()) {
-        customDisplayName = settingsUsername.value.trim();
-        localStorage.setItem("chat_family_custom_name", customDisplayName);
-      }
-      profileModal.style.display = "none";
-    });
-
-    document.getElementById("btn-logout").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        localStorage.removeItem("chat_family_custom_name");
-        profileModal.style.display = "none";
-        window.location.reload();
-      });
-    });
-
-    chkLock.addEventListener("change", () => {
-      if (chkLock.checked) {
-        if (localStorage.getItem("chat_family_lock_enabled") !== "true") {
-          newPinInput.value = "";
-          pinModal.style.display = "flex";
-        }
-      } else {
-        localStorage.setItem("chat_family_lock_enabled", "false");
-      }
-    });
-
-    document.getElementById("btn-pin-confirm").addEventListener("click", () => {
-      const pin = newPinInput.value.replace(/\D/g, "");
-      if (pin.length > 0) {
-        localStorage.setItem("chat_family_pin", pin);
-        localStorage.setItem("chat_family_lock_enabled", "true");
-        pinModal.style.display = "none";
-      } else {
-        alert("Insira apenas números.");
-        chkLock.checked = false;
-        pinModal.style.display = "none";
-      }
-    });
-
-    msgInput.addEventListener("input", () => {
-      if (msgInput.value.trim().length > 0) {
-        btnSend.style.display = "flex";
-        btnMic.style.display = "none";
-      } else {
-        btnSend.style.display = "none";
-        btnMic.style.display = "flex";
-      }
-    });
-
-    const btnAttach = document.getElementById("btn-attach");
-    const fileInput = document.getElementById("file-input");
-    btnAttach.addEventListener("click", () => fileInput.click());
-    
-    fileInput.addEventListener("change", () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        let fileType = "file";
-        if (file.type.startsWith("audio/")) fileType = "audio";
-        else if (file.type.startsWith("image/")) fileType = "image";
-
-        push(ref(db, "messages"), {
-          sender: customDisplayName,
-          text: file.name,
-          fileData: e.target.result,
-          fileName: file.name,
-          type: fileType,
-          timestamp: Date.now()
-        });
-        fileInput.value = "";
-      };
-      reader.readAsDataURL(file);
-    });
-
-    function getSupportedMimeType() {
-      const types = ["audio/ogg;codecs=opus", "audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/wav"];
-      for (const type of types) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          return type;
-        }
-      }
-      return "";
-    }
-
-    async function startAudioRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const options = {};
-        const mimeType = getSupportedMimeType();
-        if (mimeType) {
-          options.mimeType = mimeType;
-        }
-        
-        mediaRecorder = new MediaRecorder(stream, options);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/ogg' });
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            push(ref(db, "messages"), {
-              sender: customDisplayName,
-              text: "Áudio",
-              fileData: reader.result,
-              fileName: "audio.ogg",
-              type: "audio",
-              timestamp: Date.now()
-            });
-          };
-          reader.readAsDataURL(audioBlob);
-          stream.getTracks().forEach(track => track.stop());
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDthwqD0CGFwDov-zfO-Hx6TD_y3lHsnoc",
+            authDomain: "teuzin-apps.firebaseapp.com",
+            databaseURL: "https://teuzin-apps-default-rtdb.firebaseio.com",
+            projectId: "teuzin-apps",
+            storageBucket: "teuzin-apps.firebasestorage.app",
+            messagingSenderId: "695505471506",
+            appId: "1:695505471506:web:efe322e605af4a30bfb0cb",
+            measurementId: "G-TLJ87EYNFP"
         };
-        mediaRecorder.start();
-        btnMic.classList.add("recording");
-      } catch (err) { alert("Sem permissão ao microfone."); }
-    }
 
-    function stopAudioRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-        btnMic.classList.remove("recording");
-      }
-    }
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    btnMic.addEventListener("touchstart", (e) => { e.preventDefault(); startAudioRecording(); });
-    btnMic.addEventListener("touchend", (e) => { e.preventDefault(); stopAudioRecording(); });
-    btnMic.addEventListener("contextmenu", (e) => { e.preventDefault(); });
+        let currentUser = null;
+        let currentRoomId = null;
+        let currentRoomAdmin = null;
+        let selectedMessageId = null; 
+        let replyMessageData = null; 
+        let unsubscribeMessages = null;
+        let unsubscribeRoom = null;
 
-    btnMic.addEventListener("mousedown", startAudioRecording);
-    btnMic.addEventListener("mouseup", stopAudioRecording);
+        const screens = {
+            login: document.getElementById('screen-login'),
+            nickname: document.getElementById('screen-nickname'),
+            rooms: document.getElementById('screen-rooms'),
+            chat: document.getElementById('screen-chat')
+        };
 
-    function initChat() {
-      const messagesRef = ref(db, "messages");
-      const nameRef = ref(db, "groupName");
-
-      onValue(nameRef, (snapshot) => {
-        const name = snapshot.val();
-        if (name) {
-          groupTitle.textContent = name;
+        function showScreen(screenKey) {
+            Object.keys(screens).forEach(key => {
+                screens[key].classList.toggle('active', key === screenKey);
+            });
         }
-      });
 
-      function saveGroupName() {
-        const newName = groupTitle.textContent.trim();
-        if (newName) {
-          set(nameRef, newName);
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().displayName) {
+                    currentUser.customName = userDoc.data().displayName;
+                    loadRoomsScreen();
+                } else {
+                    showScreen('nickname');
+                }
+            } else {
+                currentUser = null;
+                showScreen('login');
+            }
+        });
+
+        document.getElementById('btn-google-login').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
+        });
+
+        document.getElementById('btn-save-nickname').addEventListener('click', async () => {
+            const name = document.getElementById('input-nickname').value.trim();
+            if (!name) return alert('Insira um nome válido!');
+            
+            await db.collection('users').doc(currentUser.uid).set({
+                displayName: name,
+                email: currentUser.email,
+                photoURL: currentUser.photoURL
+            });
+            currentUser.customName = name;
+            loadRoomsScreen();
+        });
+
+        function loadRoomsScreen() {
+            document.getElementById('user-avatar-rooms').src = currentUser.photoURL;
+            showScreen('rooms');
         }
-      }
 
-      groupTitle.addEventListener("blur", saveGroupName);
-      groupTitle.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          groupTitle.blur();
+        document.getElementById('btn-enter-room').addEventListener('click', async () => {
+            const rName = document.getElementById('room-name').value.trim().toLowerCase();
+            const rPass = document.getElementById('room-pass').value.trim();
+
+            if (!rName || !rPass) return alert('Preencha os dados da sala!');
+
+            const roomRef = db.collection('rooms').doc(rName);
+            const roomDoc = await roomRef.get();
+
+            if (!roomDoc.exists) {
+                await roomRef.set({
+                    name: rName,
+                    password: rPass,
+                    admin: currentUser.uid,
+                    participants: { [currentUser.uid]: currentUser.customName }
+                });
+                enterChatRoom(rName, currentUser.uid);
+            } else {
+                const roomData = roomDoc.data();
+                if (roomData.password === rPass) {
+                    let updateData = {};
+                    updateData[`participants.${currentUser.uid}`] = currentUser.customName;
+                    await roomRef.update(updateData);
+                    enterChatRoom(rName, roomData.admin);
+                } else {
+                    alert('Senha incorreta para esta sala!');
+                }
+            }
+        });
+
+        function enterChatRoom(roomId, adminUid) {
+            currentRoomId = roomId;
+            currentRoomAdmin = adminUid;
+            document.getElementById('user-avatar-chat').src = currentUser.photoURL;
+            showScreen('chat');
+
+            unsubscribeRoom = db.collection('rooms').doc(roomId).onSnapshot(doc => {
+                if (!doc.exists) return leaveRoom();
+                const data = doc.data();
+                currentRoomAdmin = data.admin;
+                document.getElementById('chat-room-title').innerText = data.name.toUpperCase();
+                
+                if (!data.participants[currentUser.uid]) {
+                    alert('Você foi removido desta sala.');
+                    leaveRoom();
+                }
+            });
+
+            unsubscribeMessages = db.collection('rooms').doc(roomId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot(snapshot => {
+                    const container = document.getElementById('chat-messages');
+                    container.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const msg = doc.data();
+                        const isMe = msg.senderId === currentUser.uid;
+                        
+                        const block = document.createElement('div');
+                        block.className = `msg-block ${isMe ? 'me' : 'other'}`;
+                        block.dataset.id = doc.id;
+                        block.dataset.sender = msg.senderId;
+                        block.dataset.text = msg.text;
+                        block.dataset.author = msg.senderName;
+
+                        let replyHTML = '';
+                        if (msg.replyTo) {
+                            replyHTML = `<div class="msg-quoted"><strong>${msg.replyTo.author}:</strong> ${msg.replyTo.text}</div>`;
+                        }
+
+                        block.innerHTML = `
+                            ${replyHTML}
+                            <span class="msg-author">${msg.senderName}</span>
+                            <span class="msg-text">${msg.text}</span>
+                            <span class="msg-time">${msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+                        `;
+
+                        block.addEventListener('click', (e) => openMessageMenu(e, block));
+                        container.appendChild(block);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                });
         }
-      });
 
-      btnSend.onclick = () => {
-        const text = msgInput.value.trim();
-        if (text) {
-          push(messagesRef, {
-            sender: customDisplayName,
-            text: text,
-            type: "text",
-            timestamp: Date.now()
-          });
-          msgInput.value = "";
-          btnSend.style.display = "none";
-          btnMic.style.display = "flex";
+        function leaveRoom() {
+            if (unsubscribeMessages) unsubscribeMessages();
+            if (unsubscribeRoom) unsubscribeRoom();
+            currentRoomId = null;
+            loadRoomsScreen();
         }
-      };
+        document.getElementById('btn-leave-room').addEventListener('click', leaveRoom);
 
-      msgInput.onkeypress = (e) => { if (e.key === "Enter") btnSend.click(); };
+        document.getElementById('btn-send').addEventListener('click', sendTextMessage);
+        document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendTextMessage(); });
 
-      onValue(messagesRef, (snapshot) => {
-        messagesContainer.innerHTML = "";
-        const data = snapshot.val();
-        if (data) {
-          Object.keys(data).forEach(id => renderMessage(data[id]));
+        async function sendTextMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text || !currentRoomId) return;
+
+            const msgPayload = {
+                senderId: currentUser.uid,
+                senderName: currentUser.customName,
+                text: text,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (replyMessageData) {
+                msgPayload.replyTo = replyMessageData;
+                cancelReply();
+            }
+
+            await db.collection('rooms').doc(currentRoomId).collection('messages').add(msgPayload);
+            input.value = '';
         }
-      });
-    }
 
-    function renderMessage(data) {
-      const msgDiv = document.createElement("div");
-      const isMe = data.sender === customDisplayName;
-      
-      msgDiv.classList.add("msg", isMe ? "sent" : "received");
-      
-      const senderSpan = document.createElement("span");
-      senderSpan.classList.add("sender");
-      senderSpan.textContent = isMe ? "Você" : data.sender;
-      msgDiv.appendChild(senderSpan);
+        function openMessageMenu(e, block) {
+            selectedMessageId = block.dataset.id;
+            const senderId = block.dataset.sender;
+            const text = block.dataset.text;
+            const author = block.dataset.author;
 
-      const d = new Date(data.timestamp);
-      const timeStr = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-      const timeSpan = document.createElement("span");
-      timeSpan.classList.add("timestamp");
-      timeSpan.textContent = timeStr;
-      msgDiv.appendChild(timeSpan);
+            const isMe = senderId === currentUser.uid;
+            const isAmIAdmin = currentUser.uid === currentRoomAdmin;
 
-      if (data.type === "image") {
-        const box = document.createElement("div");
-        box.classList.add("file-message");
-        box.innerHTML = `<img class="img-preview" src="${data.fileData}">`;
-        const dl = document.createElement("a");
-        dl.classList.add("btn-download");
-        dl.href = data.fileData;
-        dl.download = data.fileName;
-        dl.textContent = "Baixar Foto";
-        box.appendChild(dl);
-        msgDiv.appendChild(box);
-      } else if (data.type === "file") {
-        const box = document.createElement("div");
-        box.classList.add("file-message");
-        box.style.fontSize = "0.85rem";
-        box.textContent = data.fileName;
-        const dl = document.createElement("a");
-        dl.classList.add("btn-download");
-        dl.href = data.fileData;
-        dl.download = data.fileName;
-        dl.textContent = "Baixar Arquivo";
-        box.appendChild(dl);
-        msgDiv.appendChild(box);
-      } else if (data.type === "audio") {
-        const box = document.createElement("div");
-        const au = document.createElement("audio");
-        au.controls = true;
-        au.preload = "auto";
-        au.src = data.fileData;
-        box.appendChild(au);
-        msgDiv.appendChild(box);
-      } else {
-        const txt = document.createElement("div");
-        txt.textContent = data.text;
-        msgDiv.appendChild(txt);
-      }
+            const menu = document.getElementById('message-menu');
+            
+            document.getElementById('menu-edit').style.display = isMe ? 'block' : 'none';
+            document.getElementById('menu-delete').style.display = (isMe || isAmIAdmin) ? 'block' : 'none';
 
-      messagesContainer.appendChild(msgDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-  </script>
+            menu.style.display = 'flex';
+
+            document.getElementById('menu-reply').onclick = () => {
+                replyMessageData = { id: selectedMessageId, text: text, author: author };
+                document.getElementById('reply-user').innerText = author;
+                document.getElementById('reply-text').innerText = text;
+                document.getElementById('reply-preview').style.display = 'flex';
+                menu.style.display = 'none';
+            };
+
+            document.getElementById('menu-edit').onclick = async () => {
+                const newText = prompt("Edite sua mensagem:", text);
+                if (newText && newText.trim() !== "") {
+                    await db.collection('rooms').doc(currentRoomId).collection('messages').doc(selectedMessageId).update({
+                        text: newText.trim() + " (editada)"
+                    });
+                }
+                menu.style.display = 'none';
+            };
+
+            document.getElementById('menu-delete').onclick = async () => {
+                if (confirm("Deseja apagar essa mensagem para todos?")) {
+                    await db.collection('rooms').doc(currentRoomId).collection('messages').doc(selectedMessageId).delete();
+                }
+                menu.style.display = 'none';
+            };
+        }
+
+        function cancelReply() {
+            replyMessageData = null;
+            document.getElementById('reply-preview').style.display = 'none';
+        }
+        document.getElementById('btn-cancel-reply').addEventListener('click', cancelReply);
+        document.getElementById('menu-cancel').addEventListener('click', () => { document.getElementById('message-menu').style.display = 'none'; });
+
+        const profileModal = document.getElementById('modal-profile');
+        const openProfileTrigger = (imgId) => {
+            document.getElementById(imgId).addEventListener('click', () => {
+                document.getElementById('modal-user-img').src = currentUser.photoURL;
+                document.getElementById('modal-user-name').innerText = currentUser.customName;
+                document.getElementById('modal-user-email').innerText = currentUser.email;
+                profileModal.style.display = 'flex';
+            });
+        };
+        openProfileTrigger('user-avatar-rooms');
+        openProfileTrigger('user-avatar-chat');
+
+        document.getElementById('close-profile').addEventListener('click', () => profileModal.style.display = 'none');
+        document.getElementById('btn-logout').addEventListener('click', () => { auth.signOut(); profileModal.style.display = 'none'; });
+
+        document.getElementById('btn-toggle-theme').addEventListener('click', () => {
+            if (document.body.classList.contains('theme-dark')) {
+                document.body.classList.replace('theme-dark', 'theme-light');
+            } else {
+                document.body.classList.replace('theme-light', 'theme-dark');
+            }
+        });
+
+        const roomModal = document.getElementById('modal-room');
+        document.getElementById('btn-room-details').addEventListener('click', async () => {
+            const roomDoc = await db.collection('rooms').doc(currentRoomId).get();
+            if (!roomDoc.exists) return;
+            const roomData = roomDoc.data();
+
+            document.getElementById('info-room-name').innerText = `Sala: ${roomData.name.toUpperCase()}`;
+            
+            const isAmIAdmin = currentUser.uid === currentRoomAdmin;
+            document.getElementById('adm-controls').style.display = isAmIAdmin ? 'block' : 'none';
+
+            const pList = document.getElementById('participants-list');
+            pList.innerHTML = '';
+            
+            Object.keys(roomData.participants).forEach(uid => {
+                const name = roomData.participants[uid];
+                const row = document.createElement('div');
+                row.className = 'participant-row';
+                row.innerHTML = `
+                    <span>${name} ${uid === roomData.admin ? '<strong>(ADM)</strong>' : ''}</span>
+                    ${(isAmIAdmin && uid !== currentUser.uid) ? `<button class="btn-danger" style="width:auto; padding:4px 8px; margin:0;" onclick="kickUser('${uid}')">Remover</button>` : ''}
+                `;
+                pList.appendChild(row);
+            });
+
+            roomModal.style.display = 'flex';
+        });
+
+        document.getElementById('close-room').addEventListener('click', () => roomModal.style.display = 'none');
+
+        window.kickUser = async function(uidTarget) {
+            if (confirm("Tem certeza que deseja remover este participante?")) {
+                let updateData = {};
+                updateData[`participants.${uidTarget}`] = firebase.firestore.FieldValue.delete();
+                await db.collection('rooms').doc(currentRoomId).update(updateData);
+                alert('Participante removido!');
+                roomModal.style.display = 'none';
+            }
+        };
+
+        document.getElementById('btn-rename-room').addEventListener('click', async () => {
+            const newName = document.getElementById('new-room-name').value.trim().toLowerCase();
+            if (!newName) return alert('Insira um nome válido!');
+            await db.collection('rooms').doc(currentRoomId).update({ name: newName });
+            alert('Nome alterado com sucesso!');
+            roomModal.style.display = 'none';
+        });
+
+        document.getElementById('btn-clear-chat').addEventListener('click', async () => {
+            if (confirm("ATENÇÃO: Deseja apagar permanentemente todas as mensagens desta sala?")) {
+                const messagesSnapshot = await db.collection('rooms').doc(currentRoomId).collection('messages').get();
+                const batch = db.batch();
+                messagesSnapshot.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                alert('Histórico de conversas limpo!');
+                roomModal.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
