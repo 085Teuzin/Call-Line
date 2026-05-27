@@ -3,105 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Call Line</title>
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>CineSync Mobile</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
     <style>
-        .bg-pixelated {
-            background: linear-gradient(45deg, #1e1e24 25%, #2a2a35 25%, #2a2a35 50%, #1e1e24 50%, #1e1e24 75%, #2a2a35 75%, #2a2a35 100%);
-            background-size: 40px 40px;
-            filter: blur(2px);
-            opacity: 0.15;
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --primary: #e50914;
+            --text: #ffffff;
+            --text-secondary: #aaaaaa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TELA DE LOGIN / CRIAÇÃO DE SALA */
+        #screen-login {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(18,18,18,1) 100%);
+        }
+
+        .login-card {
+            background-color: var(--card-bg);
+            padding: 30px 24px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            border: 1px solid #2a2a2a;
+        }
+
+        .login-card h2 {
+            margin-bottom: 24px;
+            text-align: center;
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #252525;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:active {
+            background-color: #b80710;
+        }
+
+        /* TELA PRINCIPAL DO APP (SALA) */
+        #screen-room {
+            display: none; /* Começa escondida */
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* PLAYER DE VÍDEO */
+        .video-container {
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            aspect-ratio: 16/9;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Custom Controls apenas para o ADM (Play/Pause/Speed) */
+        .adm-controls {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            padding: 10px;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .adm-controls button, .adm-controls select {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .adm-controls button:active {
+            background: var(--primary);
+        }
+
+        .room-info-bar {
+            background-color: var(--card-bg);
+            padding: 8px 12px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .badge-role {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .badge-adm { background-color: #2e7d32; color: white; }
+        .badge-membro { background-color: #1565c0; color: white; }
+
+        /* SEÇÃO DO CHAT */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .msg-box {
+            background-color: var(--card-bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            width: fit-content;
+            word-break: break-word;
+            font-size: 14px;
+        }
+
+        .msg-user {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .chat-input-area {
+            padding: 10px;
+            background-color: var(--card-bg);
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            background-color: #121212;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-input-area button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* CRÉDITOS E RODAPÉ */
+        .credits {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            padding: 6px 0;
+            background-color: var(--bg-color);
+            border-top: 1px solid #1f1f1f;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
-<body class="bg-[#121214] text-white font-sans h-screen overflow-hidden flex flex-col justify-between p-4 sm:p-6 select-none relative">
+<body>
 
-    <div class="absolute inset-0 bg-pixelated -z-10"></div>
-
-    <header class="flex justify-between items-center w-full max-w-md mx-auto z-10">
-        <button id="btnBack" class="text-gray-400 hover:text-white transition p-2 text-xl" disabled>
-            <i class="fa-solid fa-chevron-down"></i>
-        </button>
-        <div class="flex items-center gap-1 text-xs text-gray-500 font-medium">
-            <i class="fa-solid fa-lock text-[10px]"></i> End-to-End Encrypted
-        </div>
-        <button class="text-gray-400 hover:text-white transition p-2 text-xl">
-            <i class="fa-solid fa-ellipsis"></i>
-        </button>
-    </header>
-
-    <main class="flex-1 flex flex-col items-center justify-center text-center z-10 px-4">
-        <div id="screenLogin" class="w-full max-w-xs flex flex-col gap-4">
-            <h1 class="text-2xl font-bold tracking-wider mb-2 bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">CALL LINE</h1>
-            <input type="text" id="inputName" placeholder="Seu nome" class="w-full bg-[#1e1e22] border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-center">
-            <input type="text" id="inputRoom" placeholder="ID da Sala" class="w-full bg-[#1e1e22] border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-center">
-            <button id="btnJoin" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 mt-2">
-                Entrar na Sala
-            </button>
-        </div>
-
-        <div id="screenCall" class="hidden w-full max-w-sm flex flex-col items-center justify-center animate-fade-in relative">
-            <div class="relative mb-4">
-                <div class="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-bold shadow-2xl relative z-10" id="avatarLetter">
-                    -
-                </div>
-                <div class="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-40 animate-pulse"></div>
+    <div id="screen-login">
+        <div class="login-card">
+            <h2>CineSync</h2>
+            <div class="input-group">
+                <label for="input-name">Seu Nome / Apelido</label>
+                <input type="text" id="input-name" placeholder="Ex: Teuzin">
             </div>
-            
-            <h2 id="roomUser" class="text-2xl sm:text-3xl font-semibold tracking-wide text-gray-100">...</h2>
-            <p id="callStatus" class="text-gray-400 text-sm mt-1 font-light tracking-wider animate-pulse">Conectando...</p>
-
-            <div id="participantsList" class="mt-4 w-full max-h-32 overflow-y-auto bg-black/20 rounded-xl p-3 flex flex-wrap gap-2 justify-center content-start border border-white/5">
+            <div class="input-group">
+                <label for="input-room">Nome da Sala</label>
+                <input type="text" id="input-room" placeholder="Ex: sala-dos-cria">
             </div>
-        </div>
-    </main>
-
-    <footer id="controlsBar" class="invisible opacity-0 translate-y-4 transition-all duration-300 w-full max-w-md mx-auto bg-[#1e1e22]/90 backdrop-blur-lg border border-gray-800/60 rounded-3xl p-4 flex justify-between items-center gap-2 mb-16 shadow-2xl z-10">
-        <button id="btnChat" class="flex-1 max-w-[72px] aspect-square rounded-2xl bg-white/5 hover:bg-white/10 active:scale-95 transition flex items-center justify-center text-lg text-gray-300 relative">
-            <i class="fa-solid fa-comment"></i>
-            <span id="chatBadge" class="hidden absolute top-2 right-2 w-2.5 h-2.5 bg-indigo-500 rounded-full"></span>
-        </button>
-        
-        <button id="btnMute" class="flex-1 max-w-[72px] aspect-square rounded-2xl bg-white/5 hover:bg-white/10 active:scale-95 transition flex items-center justify-center text-lg text-gray-300">
-            <i class="fa-solid fa-microphone"></i>
-        </button>
-        
-        <button id="btnSpeaker" class="flex-1 max-w-[72px] aspect-square rounded-2xl bg-indigo-600 text-white active:scale-95 transition flex items-center justify-center text-lg">
-            <i class="fa-solid fa-volume-high"></i>
-        </button>
-        
-        <button id="btnHangup" class="flex-1 max-w-[72px] aspect-square rounded-2xl bg-red-500 hover:bg-red-600 active:scale-95 transition flex items-center justify-center text-xl text-white shadow-lg shadow-red-500/20">
-            <i class="fa-solid fa-phone-slash rotate-[-135deg]"></i>
-        </button>
-    </footer>
-
-    <div id="chatModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-[#1e1e22] w-full sm:max-w-md h-[80vh] sm:h-[600px] rounded-t-3xl sm:rounded-3xl flex flex-col justify-between overflow-hidden border border-gray-800/60 shadow-2xl translate-y-full transition-transform duration-300" id="chatContainer">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#18181c]">
-                <h3 class="font-semibold text-lg flex items-center gap-2">
-                    <i class="fa-solid fa-comments text-indigo-400"></i> Chat da Sala
-                </h3>
-                <button id="btnCloseChat" class="text-gray-400 hover:text-white p-2 text-xl">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+            <div class="input-group">
+                <label for="input-drive-link">Link do Vídeo (Google Drive)</label>
+                <input type="text" id="input-drive-link" placeholder="Cole o link de compartilhamento aqui">
             </div>
-            
-            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 scrollbar-thin"></div>
-            
-            <form id="chatForm" class="p-4 border-t border-gray-800 bg-[#18181c] flex gap-2">
-                <input type="text" id="chatInput" placeholder="Digite uma mensagem..." autocomplete="off" class="flex-1 bg-[#121214] border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-sm">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-4 rounded-xl transition flex items-center justify-center">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </form>
+            <button class="btn-submit" id="btn-enter">Criar / Entrar na Sala</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, remove, onDisconnect, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <div id="screen-room">
+        <div class="video-container">
+            <video id="main-player" controls playsinline></video>
+            
+            <div class="adm-controls" id="adm-panel">
+                <button onclick="rewindVideo()">-10s</button>
+                <button onclick="forwardVideo()">+10s</button>
+                <select id="video-speed" onchange="changeSpeed(this.value)">
+                    <option value="1">1.0x (Normal)</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2.0x</option>
+                </select>
+                <span style="font-size: 11px; color: #fff; margin-left: auto;">Painel ADM</span>
+            </div>
+        </div>
 
+        <div class="room-info-bar">
+            <div>Sala: <b id="display-room-name">...</b></div>
+            <div>Cargo: <span id="display-role" class="badge-role">...</span></div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Digite uma mensagem...">
+                <button id="btn-send-msg">Enviar</button>
+            </div>
+        </div>
+
+        <div class="credits">
+            Made By: @085_Teuzinnn
+        </div>
+    </div>
+
+    <script>
+        // Configuração do seu Firebase que você enviou
         const firebaseConfig = {
             apiKey: "AIzaSyDthwqD0CGFwDov-zfO-Hx6TD_y3lHsnoc",
             authDomain: "teuzin-apps.firebaseapp.com",
@@ -113,350 +321,235 @@
             measurementId: "G-TLJ87EYNFP"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        // Inicializa o Firebase (Compat v10)
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        let localStream = null;
-        let peerConnections = {};
-        let currentRoom = null;
-        let currentUser = null;
-        let userId = Math.random().toString(36).substring(2, 9);
-        let isMuted = false;
-        let isSpeakerOn = true;
-        let isChatOpen = false;
-
-        const rtcConfig = {
-            iceServers: [
-                { urls: "stun:stun.l.google.com:19302" },
-                { urls: "stun:stun1.l.google.com:19302" },
-                { urls: "stun:stun2.l.google.com:19302" }
-            ]
-        };
-
-        const screenLogin = document.getElementById("screenLogin");
-        const screenCall = document.getElementById("screenCall");
-        const controlsBar = document.getElementById("controlsBar");
-        const inputName = document.getElementById("inputName");
-        const inputRoom = document.getElementById("inputRoom");
-        const btnJoin = document.getElementById("btnJoin");
-        const btnHangup = document.getElementById("btnHangup");
-        const btnMute = document.getElementById("btnMute");
-        const btnSpeaker = document.getElementById("btnSpeaker");
-        const btnBack = document.getElementById("btnBack");
-        const roomUser = document.getElementById("roomUser");
-        const callStatus = document.getElementById("callStatus");
-        const avatarLetter = document.getElementById("avatarLetter");
-        const participantsList = document.getElementById("participantsList");
+        // Elementos da interface
+        const screenLogin = document.getElementById('screen-login');
+        const screenRoom = document.getElementById('screen-room');
+        const videoPlayer = document.getElementById('main-player');
+        const admPanel = document.getElementById('adm-panel');
         
-        const btnChat = document.getElementById("btnChat");
-        const chatBadge = document.getElementById("chatBadge");
-        const chatModal = document.getElementById("chatModal");
-        const chatContainer = document.getElementById("chatContainer");
-        const btnCloseChat = document.getElementById("btnCloseChat");
-        const chatMessages = document.getElementById("chatMessages");
-        const chatForm = document.getElementById("chatForm");
-        const chatInput = document.getElementById("chatInput");
+        let username = "";
+        let roomName = "";
+        let isAdm = false;
+        let userId = "user_" + Math.random().toString(36).substr(2, 9);
+        let roomRef = null;
+        let isSyncing = false; // Evita loops infinitos de atualização mútua
 
-        btnJoin.addEventListener("click", joinRoom);
-        btnHangup.addEventListener("click", leaveRoom);
-        btnBack.addEventListener("click", leaveRoom);
-        btnMute.addEventListener("click", toggleMute);
-        btnSpeaker.addEventListener("click", toggleSpeaker);
-        
-        btnChat.addEventListener("click", openChat);
-        btnCloseChat.addEventListener("click", closeChat);
-        chatForm.addEventListener("submit", sendChatMessage);
-
-        async function joinRoom() {
-            const name = inputName.value.trim();
-            const room = inputRoom.value.trim().toLowerCase();
-
-            if (!name || !room) {
-                alert("Preencha seu nome e a sala!");
-                return;
+        // Função mágica para converter link do Google Drive em link direto de streaming
+        function parseDriveLink(url) {
+            if (!url) return "";
+            // Procura pelo ID padrão do arquivo do drive
+            const regExp = /\/d\/([^/]+)\/(?:view|edit)?/;
+            const match = url.match(regExp);
+            if (match && match[1]) {
+                return `https://docs.google.com/uc?export=download&id=${match[1]}`;
             }
-
-            currentUser = name;
-            currentRoom = room;
-
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            } catch (err) {
-                alert("Permissão de áudio negada ou microfone indisponível. Verifique as configurações do navegador.");
-                return;
-            }
-
-            screenLogin.classList.add("hidden");
-            screenCall.classList.remove("hidden");
-            controlsBar.classList.remove("invisible", "opacity-0", "translate-y-4");
-            btnBack.removeAttribute("disabled");
-
-            roomUser.textContent = currentRoom;
-            avatarLetter.textContent = currentUser.charAt(0).toUpperCase();
-            callStatus.textContent = "Entrando em contato...";
-
-            const userRef = ref(db, `rooms/${currentRoom}/users/${userId}`);
-            await set(userRef, { name: currentUser, id: userId });
-            onDisconnect(userRef).remove();
-
-            listenToRoom();
-            listenToSignals();
-            listenToChat();
+            return url; // Se não for link do drive, tenta usar o link puro enviado
         }
 
-        function listenToRoom() {
-            const usersRef = ref(db, `rooms/${currentRoom}/users`);
-            onValue(usersRef, (snapshot) => {
-                participantsList.innerHTML = "";
-                const data = snapshot.val() || {};
-                
-                let count = 0;
-                Object.keys(data).forEach(id => {
-                    count++;
-                    const p = document.createElement("span");
-                    p.className = "bg-white/10 text-xs px-3 py-1.5 rounded-full border border-white/5 flex items-center gap-1.5";
-                    p.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ${data[id].name}`;
-                    participantsList.appendChild(p);
+        // Evento do botão de entrar/criar sala
+        document.getElementById('btn-enter').addEventListener('click', () => {
+            username = document.getElementById('input-name').value.trim();
+            roomName = document.getElementById('input-room').value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+            let driveLink = document.getElementById('input-drive-link').value.trim();
 
-                    if (id !== userId && !peerConnections[id]) {
-                        initiateCall(id);
-                    }
-                });
+            if (!username || !roomName) {
+                alert("Por favor, preencha seu nome e o nome da sala!");
+                return;
+            }
 
-                if(count > 1) {
-                    callStatus.textContent = "Em chamada";
+            roomRef = database.ref('rooms/' + roomName);
+
+            // Verifica se a sala já existe ou precisa ser criada
+            roomRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    // A sala existe -> Entra como membro
+                    isAdm = false;
+                    setupRoom();
                 } else {
-                    callStatus.textContent = "Aguardando participantes...";
-                }
-            });
-        }
+                    // A sala não existe -> Cria e vira ADM
+                    if(!driveLink) {
+                        alert("Como você está criando a sala, precisa inserir o link do vídeo do Google Drive!");
+                        return;
+                    }
+                    isAdm = true;
+                    const directVideoUrl = parseDriveLink(driveLink);
 
-        async function initiateCall(targetId) {
-            const pc = createPeerConnection(targetId);
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            
-            const offer = await pc.createOffer({ offerToReceiveAudio: true });
-            await pc.setLocalDescription(offer);
-
-            await set(ref(db, `rooms/${currentRoom}/signals/${targetId}/${userId}`), {
-                type: "offer",
-                sdp: offer.sdp,
-                sender: userId
-            });
-        }
-
-        function createPeerConnection(targetId) {
-            const pc = new RTCPeerConnection(rtcConfig);
-            peerConnections[targetId] = pc;
-
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    push(ref(db, `rooms/${currentRoom}/ice/${targetId}/${userId}`), {
-                        candidate: JSON.stringify(event.candidate)
+                    // Inicializa os dados da nova sala no Firebase
+                    roomRef.set({
+                        adminId: userId,
+                        videoUrl: directVideoUrl,
+                        status: {
+                            currentTime: 0,
+                            paused: true,
+                            playbackRate: 1,
+                            timestamp: Date.now()
+                        }
+                    }).then(() => {
+                        setupRoom();
                     });
                 }
-            };
+            });
+        });
 
-            pc.ontrack = (event) => {
-                let audioEl = document.getElementById(`audio_${targetId}`);
-                if (!audioEl) {
-                    audioEl = document.createElement("audio");
-                    audioEl.id = `audio_${targetId}`;
-                    audioEl.autoplay = true;
-                    audioEl.playsInline = true;
-                    document.body.appendChild(audioEl);
-                }
-                audioEl.srcObject = event.streams[0];
-                audioEl.muted = !isSpeakerOn;
-            };
+        // Configura e abre a interface da sala sincronizada
+        function setupRoom() {
+            screenLogin.style.display = 'none';
+            screenRoom.style.display = 'flex';
+            document.getElementById('display-room-name').innerText = roomName;
+            
+            const roleBadge = document.getElementById('display-role');
+            if (isAdm) {
+                roleBadge.innerText = "ADM";
+                roleBadge.className = "badge-role badge-adm";
+                admPanel.style.display = 'flex';
+                setupAdminListeners();
+            } else {
+                roleBadge.innerText = "Membro";
+                roleBadge.className = "badge-role badge-membro";
+                setupMemberListeners();
+            }
 
-            return pc;
-        }
-
-        function listenToSignals() {
-            const signalRef = ref(db, `rooms/${currentRoom}/signals/${userId}`);
-            onValue(signalRef, async (snapshot) => {
-                const signals = snapshot.val();
-                if (!signals) return;
-
-                for (let senderId in signals) {
-                    const signal = signals[senderId];
-                    let pc = peerConnections[senderId];
-
-                    if (signal.type === "offer") {
-                        pc = createPeerConnection(senderId);
-                        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-                        await pc.setRemoteDescription(new RTCSessionDescription(signal));
-                        
-                        const answer = await pc.createAnswer();
-                        await pc.setLocalDescription(answer);
-
-                        await set(ref(db, `rooms/${currentRoom}/signals/${senderId}/${userId}`), {
-                            type: "answer",
-                            sdp: answer.sdp,
-                            sender: userId
-                        });
-                        await remove(ref(db, `rooms/${currentRoom}/signals/${userId}/${senderId}`));
-
-                    } else if (signal.type === "answer") {
-                        if (pc) {
-                            await pc.setRemoteDescription(new RTCSessionDescription(signal));
-                            await remove(ref(db, `rooms/${currentRoom}/signals/${userId}/${senderId}`));
-                        }
-                    }
-                }
+            // Pega o link do vídeo salvo na sala e carrega no Player
+            roomRef.child('videoUrl').once('value', (snapshot) => {
+                videoPlayer.src = snapshot.val();
+                videoPlayer.load();
             });
 
-            const iceRef = ref(db, `rooms/${currentRoom}/ice/${userId}`);
-            onValue(iceRef, async (snapshot) => {
-                const iceData = snapshot.val();
-                if (!iceData) return;
-
-                for (let senderId in iceData) {
-                    const pc = peerConnections[senderId];
-                    if (pc && pc.remoteDescription) {
-                        for (let key in iceData[senderId]) {
-                            const candidate = JSON.parse(iceData[senderId][key].candidate);
-                            try {
-                                await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                            } catch(e){}
-                        }
-                        await remove(ref(db, `rooms/${currentRoom}/ice/${userId}/${senderId}`));
-                    }
-                }
-            });
+            // Ativa o sistema de chat em tempo real
+            setupChat();
         }
 
-        function listenToChat() {
-            const chatRef = ref(db, `rooms/${currentRoom}/messages`);
-            onChildAdded(chatRef, (snapshot) => {
-                const msg = snapshot.val();
-                if (!msg) return;
-
-                const isMe = msg.senderId === userId;
-                const msgEl = document.createElement("div");
-                msgEl.className = `flex flex-col max-w-[80%] ${isMe ? "self-end items-end" : "self-start items-start"}`;
-                
-                msgEl.innerHTML = `
-                    <span class="text-[10px] text-gray-500 px-1 mb-0.5">${msg.senderName}</span>
-                    <div class="px-3 py-2 rounded-2xl text-sm break-all ${isMe ? "bg-indigo-600 text-white rounded-tr-none" : "bg-[#2a2a30] text-gray-200 rounded-tl-none"}">
-                        ${escapeHTML(msg.text)}
-                    </div>
-                `;
-                
-                chatMessages.appendChild(msgEl);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                if (!isChatOpen && !isMe) {
-                    chatBadge.classList.remove("hidden");
-                }
-            });
-        }
-
-        function sendChatMessage(e) {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (!text) return;
-
-            const chatRef = ref(db, `rooms/${currentRoom}/messages`);
-            push(chatRef, {
-                senderId: userId,
-                senderName: currentUser,
-                text: text,
+        // ==========================================
+        // LÓGICA DO ADMINISTRADOR (ENVIA COMANDOS)
+        // ==========================================
+        function updateFirebaseVideoState() {
+            if (!isAdm || isSyncing) return;
+            roomRef.child('status').set({
+                currentTime: videoPlayer.currentTime,
+                paused: videoPlayer.paused,
+                playbackRate: videoPlayer.playbackRate,
                 timestamp: Date.now()
             });
-
-            chatInput.value = "";
         }
 
-        function openChat() {
-            isChatOpen = true;
-            chatBadge.classList.add("hidden");
-            chatModal.classList.remove("hidden");
-            setTimeout(() => {
-                chatModal.classList.remove("opacity-0");
-                chatContainer.classList.remove("translate-y-full");
-            }, 50);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        function setupAdminListeners() {
+            // Escuta eventos locais do player do ADM e avisa o Firebase
+            videoPlayer.addEventListener('play', updateFirebaseVideoState);
+            videoPlayer.addEventListener('pause', updateFirebaseVideoState);
+            videoPlayer.addEventListener('seeked', updateFirebaseVideoState);
         }
 
-        function closeChat() {
-            isChatOpen = false;
-            chatModal.classList.add("opacity-0");
-            chatContainer.classList.add("translate-y-full");
-            setTimeout(() => {
-                chatModal.add("hidden");
-            }, 300);
-        }
+        // Funções dos botões exclusivos do painel do ADM
+        function forwardVideo() { videoPlayer.currentTime += 10; updateFirebaseVideoState(); }
+        function rewindVideo() { videoPlayer.currentTime -= 10; updateFirebaseVideoState(); }
+        function changeSpeed(val) { videoPlayer.playbackRate = parseFloat(val); updateFirebaseVideoState(); }
 
-        function toggleMute() {
-            if (!localStream) return;
-            isMuted = !isMuted;
-            localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
-            
-            if (isMuted) {
-                btnMute.classList.add("bg-red-500/20", "text-red-400");
-                btnMute.innerHTML = `<i class="fa-solid fa-microphone-slash"></i>`;
-            } else {
-                btnMute.classList.remove("bg-red-500/20", "text-red-400");
-                btnMute.innerHTML = `<i class="fa-solid fa-microphone"></i>`;
-            }
-        }
 
-        function toggleSpeaker() {
-            isSpeakerOn = !isSpeakerOn;
-            
-            document.querySelectorAll("audio").forEach(audio => {
-                audio.muted = !isSpeakerOn;
+        // ==========================================
+        // LÓGICA DO MEMBRO (RECEBE COMANDOS)
+        // ==========================================
+        function setupMemberListeners() {
+            // Escuta mudanças feitas pelo ADM no Firebase
+            roomRef.child('status').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                isSyncing = true;
+
+                // Bloqueia ações diretas do membro alterando o player baseado no Firebase
+                videoPlayer.playbackRate = data.playbackRate;
+
+                // Calcula a latência caso o vídeo esteja rodando para compensar atrasos de rede
+                let targetTime = data.currentTime;
+                if (!data.paused) {
+                    const latency = (Date.now() - data.timestamp) / 1000;
+                    targetTime += latency;
+                }
+
+                // Sincroniza a barra de progresso do vídeo se a diferença for maior que 1.5 segundos
+                if (Math.abs(videoPlayer.currentTime - targetTime) > 1.5) {
+                    videoPlayer.currentTime = targetTime;
+                }
+
+                // Sincroniza Play/Pause
+                if (data.paused && !videoPlayer.paused) {
+                    videoPlayer.pause();
+                } else if (!data.paused && videoPlayer.paused) {
+                    videoPlayer.play().catch(() => {
+                        // Trata bloqueio de autoplay de navegadores mobile
+                        console.log("Autoplay bloqueado. Aguardando interação do usuário.");
+                    });
+                }
+
+                isSyncing = false;
             });
 
-            if (isSpeakerOn) {
-                btnSpeaker.className = "flex-1 max-w-[72px] aspect-square rounded-2xl bg-indigo-600 text-white active:scale-95 transition flex items-center justify-center text-lg";
-                btnSpeaker.innerHTML = `<i class="fa-solid fa-volume-high"></i>`;
-            } else {
-                btnSpeaker.className = "flex-1 max-w-[72px] aspect-square rounded-2xl bg-white/5 hover:bg-white/10 text-gray-400 active:scale-95 transition flex items-center justify-center text-lg";
-                btnSpeaker.innerHTML = `<i class="fa-solid fa-volume-xmark"></i>`;
-            }
-        }
-
-        async function leaveRoom() {
-            closeChat();
-            if (currentRoom && currentUser) {
-                await remove(ref(db, `rooms/${currentRoom}/users/${userId}`));
-                await remove(ref(db, `rooms/${currentRoom}/signals/${userId}`));
-                await remove(ref(db, `rooms/${currentRoom}/ice/${userId}`));
-            }
-
-            Object.keys(peerConnections).forEach(id => {
-                peerConnections[id].close();
-                const el = document.getElementById(`audio_${id}`);
-                if (el) el.remove();
+            // Se um membro atrevido tentar dar play ou pause localmente pelo player nativo, ele volta pro estado do Firebase
+            videoPlayer.addEventListener('play', () => {
+                if (!isAdm && !isSyncing) {
+                    roomRef.child('status').once('value', (snap) => {
+                        if(snap.val().paused) videoPlayer.pause();
+                    });
+                }
             });
-
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-
-            peerConnections = {};
-            localStream = null;
-            currentRoom = null;
-            currentUser = null;
-
-            controlsBar.classList.add("invisible", "opacity-0", "translate-y-4");
-            screenCall.classList.add("hidden");
-            screenLogin.classList.remove("hidden");
-            btnBack.setAttribute("disabled", "true");
-            participantsList.innerHTML = "";
-            chatMessages.innerHTML = "";
-            
-            if(isMuted) toggleMute();
-            if(!isSpeakerOn) toggleSpeaker();
+            videoPlayer.addEventListener('pause', () => {
+                if (!isAdm && !isSyncing) {
+                    roomRef.child('status').once('value', (snap) => {
+                        if(!snap.val().paused) videoPlayer.play().catch(()=>{});
+                    });
+                }
+            });
         }
 
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
+        // ==========================================
+        // LÓGICA DO CHAT (PARA AMBOS)
+        // ==========================================
+        function setupChat() {
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const btnSend = document.getElementById('btn-send-msg');
+
+            // Envia Mensagem
+            function sendMsg() {
+                const text = chatInput.value.trim();
+                if(!text) return;
+
+                roomRef.child('chat').push({
+                    user: username,
+                    message: text,
+                    timestamp: Date.now()
+                });
+                chatInput.value = "";
+            }
+
+            btnSend.addEventListener('click', sendMsg);
+            chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMsg(); });
+
+            // Recebe Mensagens em tempo real
+            roomRef.child('chat').limitToLast(50).on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                
+                const msgBox = document.createElement('div');
+                msgBox.className = "msg-box";
+                
+                const userSpan = document.createElement('div');
+                userSpan.className = "msg-user";
+                userSpan.innerText = data.user;
+
+                const textSpan = document.createElement('span');
+                textSpan.innerText = data.message;
+
+                msgBox.appendChild(userSpan);
+                msgBox.appendChild(textSpan);
+                chatMessages.appendChild(msgBox);
+
+                // Força o scroll para a última mensagem enviada
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
         }
     </script>
 </body>
