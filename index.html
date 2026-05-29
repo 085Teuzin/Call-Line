@@ -2,68 +2,576 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceChat Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VibeCall | Premium Voice & Chat</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { margin: 0; font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; height: 100vh; }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; }
-        #controls { padding: 20px; background: #1f1f1f; display: flex; gap: 10px; justify-content: center; }
-        button { padding: 15px 30px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; }
-        .call { background: #4caf50; color: white; }
-        .end { background: #f44336; color: white; }
-        input { padding: 15px; border-radius: 25px; border: none; flex: 1; }
+        :root {
+            --bg-main: #0b0f19;
+            --bg-panel: #131c2e;
+            --bg-surface: #1e293b;
+            --accent: #4f46e5;
+            --accent-hover: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        header {
+            background-color: var(--bg-panel);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-logo {
+            width: 12px;
+            height: 12px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .brand-logo.searching {
+            background-color: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+            animation: pulse 1.5s infinite;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+            background: var(--border);
+        }
+
+        .connection-status {
+            background-color: var(--bg-panel);
+            padding: 12px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .status-label {
+            color: var(--text-muted);
+        }
+
+        .status-value {
+            font-weight: 600;
+            color: var(--text-main);
+            background: var(--bg-surface);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #chat-timeline {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+            animation: fadeInMessage 0.25s ease-out forwards;
+        }
+
+        .message-wrapper.outgoing {
+            align-self: flex-end;
+        }
+
+        .message-wrapper.incoming {
+            align-self: flex-start;
+        }
+
+        .message-box {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-break: break-word;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .outgoing .message-box {
+            background: linear-gradient(135deg, var(--accent), #3730a3);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .incoming .message-box {
+            background: var(--bg-panel);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .message-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+
+        .outgoing .message-meta {
+            align-self: flex-end;
+        }
+
+        .system-notification {
+            align-self: center;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            text-align: center;
+            margin: 8px 0;
+        }
+
+        .interaction-panel {
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 4px;
+            align-items: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--accent);
+        }
+
+        .app-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            padding: 10px 12px;
+            font-size: 0.95rem;
+        }
+
+        .app-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .submit-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .panel-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .panel-btn.primary {
+            background: var(--accent);
+            border-color: transparent;
+        }
+
+        .panel-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .panel-btn.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .panel-btn.danger.active {
+            background: var(--danger);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .panel-btn:active {
+            transform: scale(0.97);
+        }
+
+        audio {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeInMessage {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
-    <div id="chat"></div>
-    <div id="controls">
-        <input type="text" id="msgInput" placeholder="Mensagem...">
-        <button onclick="enviarMsg()">Enviar</button>
-        <button class="call" onclick="iniciarChamada()">Ligar</button>
-        <button class="end" onclick="encerrarChamada()">Desligar</button>
+
+    <header>
+        <div class="brand">
+            <div class="brand-logo" id="app-indicator"></div>
+            <h1>VibeCall</h1>
+        </div>
+        <div class="nav-actions">
+            <button class="icon-btn" onclick="toggleFullscreen()">📺</button>
+            <button class="icon-btn" onclick="shareSession()">🔗</button>
+        </div>
+    </header>
+
+    <div class="connection-status">
+        <div class="status-line">
+            <span class="status-label">Seu endereço de acesso (ID):</span>
+            <span class="status-value" id="display-my-id">Gerando...</span>
+        </div>
+        <div class="status-line">
+            <span class="status-label">Conexão atual:</span>
+            <span class="status-value" id="display-remote-status">Disponível</span>
+        </div>
     </div>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBqRAsWfP4w-r82PZOaJcDck7W8Aeph3p8",
-            databaseURL: "https://teuzin-games-default-rtdb.firebaseio.com"
-        };
+    <div id="chat-timeline">
+        <div class="system-notification">Permissão de áudio requerida para chamadas de voz.</div>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        
-        let localStream;
-        let peerConnection;
-        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    <div class="interaction-panel">
+        <div class="input-group" id="connection-form">
+            <input type="text" class="app-input" id="remote-peer-id" placeholder="Inserir ID do parceiro...">
+            <button class="submit-btn" onclick="initiateConnection()">Conectar</button>
+        </div>
 
-        async function iniciarChamada() {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            peerConnection = new RTCPeerConnection(config);
-            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-            
-            peerConnection.onicecandidate = e => { if (e.candidate) set(ref(db, 'calls/offer'), e.candidate); };
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            set(ref(db, 'calls/offer'), { sdp: offer });
-        }
+        <div class="action-grid">
+            <button class="panel-btn danger" id="mute-toggle-btn" onclick="handleMuteToggle()">
+                <span>🎙️</span> Microfone On
+            </button>
+            <button class="panel-btn" id="disconnect-btn" onclick="terminateSession()">
+                <span>❌</span> Desconectar
+            </button>
+        </div>
 
-        function enviarMsg() {
-            const input = document.getElementById('msgInput');
-            push(ref(db, 'chat'), { text: input.value, time: Date.now() });
-            input.value = '';
-        }
+        <div class="input-group">
+            <input type="text" class="app-input" id="chat-message-input" placeholder="Digite uma mensagem..." onkeypress="checkSendKey(event)">
+            <button class="submit-btn" onclick="broadcastMessage()">Enviar</button>
+        </div>
+    </div>
 
-        onValue(ref(db, 'chat'), (snap) => {
-            const chat = document.getElementById('chat');
-            chat.innerHTML = Object.values(snap.val() || {}).map(m => `<div>${m.text}</div>`).join('');
+    <audio id="remote-audio-player" autoplay></audio>
+
+    <script>
+        const peerInstance = new Peer();
+        let dataChannel = null;
+        let voiceChannel = null;
+        let localCaptureStream = null;
+
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            .then(stream => {
+                localCaptureStream = stream;
+                pushSystemLog("Microfone pronto para transmissão.");
+            })
+            .catch(err => {
+                pushSystemLog("Falha ao obter acesso ao microfone.");
+            });
+
+        peerInstance.on('open', generatedId => {
+            document.getElementById('display-my-id').innerText = generatedId;
+            evaluateUrlParameters();
         });
 
-        window.encerrarChamada = () => {
-            if(localStream) localStream.getTracks().forEach(t => t.stop());
-            if(peerConnection) peerConnection.close();
-        };
+        peerInstance.on('connection', incomingConnection => {
+            dataChannel = incomingConnection;
+            bindDataEvents();
+        });
+
+        peerInstance.on('call', incomingVoiceCall => {
+            voiceChannel = incomingVoiceCall;
+            incomingVoiceCall.answer(localCaptureStream);
+            incomingVoiceCall.on('stream', remoteAudioStream => {
+                document.getElementById('remote-audio-player').srcObject = remoteAudioStream;
+                updateCallUI(true);
+            });
+        });
+
+        function evaluateUrlParameters() {
+            const queryParams = new URLSearchParams(window.location.search);
+            const targetId = queryParams.get('id');
+            if (targetId) {
+                document.getElementById('remote-peer-id').value = targetId;
+                pushSystemLog("ID detectado via link de convite.");
+            }
+        }
+
+        function initiateConnection() {
+            const targetPeerId = document.getElementById('remote-peer-id').value.trim();
+            if (!targetPeerId) return;
+
+            pushSystemLog("Iniciando canais de comunicação...");
+            document.getElementById('app-indicator').className = "brand-logo searching";
+
+            dataChannel = peerInstance.connect(targetPeerId);
+            bindDataEvents();
+
+            if (localCaptureStream) {
+                voiceChannel = peerInstance.call(targetPeerId, localCaptureStream);
+                voiceChannel.on('stream', remoteAudioStream => {
+                    document.getElementById('remote-audio-player').srcObject = remoteAudioStream;
+                    updateCallUI(true);
+                });
+            }
+        }
+
+        function bindDataEvents() {
+            dataChannel.on('open', () => {
+                pushSystemLog("Canal de dados criptografado estabelecido.");
+                document.getElementById('display-remote-status').innerText = "Conectado";
+                document.getElementById('app-indicator').className = "brand-logo";
+            });
+
+            dataChannel.on('data', rawPayload => {
+                renderMessageBubble(rawPayload, 'incoming');
+            });
+
+            dataChannel.on('close', () => {
+                pushSystemLog("Conexão encerrada pelo usuário remoto.");
+                clearSessionStates();
+            });
+        }
+
+        function broadcastMessage() {
+            const messageInputField = document.getElementById('chat-message-input');
+            const messageBody = messageInputField.value.trim();
+            
+            if (!messageBody) return;
+
+            if (dataChannel && dataChannel.open) {
+                dataChannel.send(messageBody);
+                renderMessageBubble(messageBody, 'outgoing');
+                messageInputField.value = '';
+            } else {
+                pushSystemLog("Impossível enviar. Nenhuma conexão ativa.");
+            }
+        }
+
+        function checkSendKey(event) {
+            if (event.key === 'Enter') {
+                broadcastMessage();
+            }
+        }
+
+        function renderMessageBubble(content, direction) {
+            const timeline = document.getElementById('chat-timeline');
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${direction}`;
+
+            const box = document.createElement('div');
+            box.className = 'message-box';
+            box.innerText = content;
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            const currentTime = new Date();
+            meta.innerText = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            wrapper.appendChild(box);
+            wrapper.appendChild(meta);
+            timeline.appendChild(wrapper);
+            timeline.scrollTop = timeline.scrollHeight;
+        }
+
+        function pushSystemLog(text) {
+            const timeline = document.getElementById('chat-timeline');
+            const notice = document.createElement('div');
+            notice.className = 'system-notification';
+            notice.innerText = text;
+            timeline.appendChild(notice);
+            timeline.scrollTop = timeline.scrollHeight;
+        }
+
+        function handleMuteToggle() {
+            if (!localCaptureStream) return;
+            const audioTracks = localCaptureStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                const isEnabled = audioTracks[0].enabled;
+                audioTracks[0].enabled = !isEnabled;
+                
+                const muteButton = document.getElementById('mute-toggle-btn');
+                if (audioTracks[0].enabled) {
+                    muteButton.className = "panel-btn danger";
+                    muteButton.innerHTML = "<span>🎙️</span> Microfone On";
+                } else {
+                    muteButton.className = "panel-btn danger active";
+                    muteButton.innerHTML = "<span>🔇</span> Mutado";
+                }
+            }
+        }
+
+        function terminateSession() {
+            if (dataChannel) dataChannel.close();
+            if (voiceChannel) voiceChannel.close();
+            clearSessionStates();
+            pushSystemLog("Sessão finalizada localmente.");
+        }
+
+        function clearSessionStates() {
+            document.getElementById('display-remote-status').innerText = "Disponível";
+            document.getElementById('app-indicator').className = "brand-logo";
+            document.getElementById('remote-audio-player').srcObject = null;
+        }
+
+        function updateCallUI(state) {
+            if(state) {
+                document.getElementById('display-remote-status').innerText = "Em chamada de voz";
+            }
+        }
+
+        function shareSession() {
+            if (!peerInstance.id) return;
+            const absoluteShareUrl = window.location.origin + window.location.pathname + "?id=" + peerInstance.id;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'VibeCall - Canal Privado',
+                    text: 'Entre na minha sala de voz privada e chat seguro.',
+                    url: absoluteShareUrl
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(absoluteShareUrl);
+                pushSystemLog("Link copiado para a área de transferência.");
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen();
+            }
+        }
     </script>
 </body>
 </html>
