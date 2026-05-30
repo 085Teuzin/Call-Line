@@ -2,487 +2,214 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VibeCall | Ultimate</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Papel Coletiva - Made By: @085_Teuzinnn</title>
     <style>
         :root {
-            --bg-main: #0b0f19;
-            --bg-panel: #131c2e;
-            --bg-surface: #1e293b;
-            --accent: #4f46e5;
-            --accent-hover: #6366f1;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --bg: #1a1a1a;
+            --text: #f4f1ea;
+            --editor-bg: #2d2d2d;
+            --accent: #ebca8a;
+            --transition: 0.3s;
+            --vh: 1vh;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
             overflow: hidden;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            -webkit-overflow-scrolling: touch;
         }
-
-        header {
-            background-color: var(--bg-panel);
-            padding: 14px 20px;
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            height: calc(var(--vh, 1vh) * 100);
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-            flex-shrink: 0;
+            flex-direction: column;
+            transition: background var(--transition), color var(--transition);
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
         }
-
-        .brand {
+        #setup {
+            flex: 1;
             display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .brand-logo {
-            width: 14px;
-            height: 14px;
-            background-color: var(--danger);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--danger);
-            transition: all 0.5s ease;
-        }
-
-        .brand-logo.one-user {
-            background-color: var(--warning);
-            box-shadow: 0 0 10px var(--warning);
-        }
-
-        .brand-logo.two-users {
-            background-color: var(--success);
-            box-shadow: 0 0 10px var(--success);
-        }
-
-        h1 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .icon-btn {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .icon-btn:active {
-            transform: scale(0.92);
-            background: var(--border);
-        }
-
-        .setup-area {
-            background-color: var(--bg-panel);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
-        .setup-area.hidden {
-            display: none !important;
-        }
-
-        .status-box {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg-main);
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            font-size: 0.85rem;
-        }
-
-        .status-value {
-            font-weight: 600;
-            color: var(--accent-hover);
-        }
-
-        #chat-timeline {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background-image: radial-gradient(var(--border) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .message-wrapper {
-            display: flex;
-            flex-direction: column;
-            max-width: 75%;
-            animation: fadeIn 0.2s ease-out forwards;
-        }
-
-        .message-wrapper.outgoing { align-self: flex-end; }
-        .message-wrapper.incoming { align-self: flex-start; }
-
-        .message-box {
-            padding: 12px 16px;
-            border-radius: 16px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            word-break: break-word;
-        }
-
-        .outgoing .message-box {
-            background: linear-gradient(135deg, var(--accent), #3730a3);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .incoming .message-box {
-            background: var(--bg-panel);
-            color: var(--text-main);
-            border-bottom-left-radius: 4px;
-            border: 1px solid var(--border);
-        }
-
-        .message-meta {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-            padding: 0 4px;
-        }
-
-        .outgoing .message-meta { align-self: flex-end; }
-
-        .system-notification {
-            align-self: center;
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            padding: 30px;
             text-align: center;
-            margin: 4px 0;
         }
-
-        .bottom-panel {
-            background-color: var(--bg-panel);
-            border-top: 1px solid var(--border);
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .input-group {
-            display: flex;
-            background: var(--bg-main);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 4px;
-            align-items: center;
-        }
-
-        .app-input {
-            flex: 1;
-            background: transparent;
-            border: none;
+        .credits { margin-top: 25px; font-size: 0.85rem; opacity: 0.8; font-weight: bold; }
+        h1 { margin-bottom: 30px; font-size: 2.2rem; letter-spacing: -1px; }
+        input {
+            width: 100%;
+            max-width: 320px;
+            padding: 18px;
+            border: 2px solid #444;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            background: #2d2d2d;
+            color: #fff;
             outline: none;
-            color: var(--text-main);
-            padding: 12px;
-            font-size: 0.95rem;
+            text-align: center;
         }
-
-        .submit-btn {
-            background: var(--accent);
-            color: white;
+        .btn-main {
+            background-color: var(--accent);
+            color: #1a1a1a;
             border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 16px 40px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
             cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
         }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        #app {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
         }
-
-        .panel-btn {
+        #editor {
+            flex: 1;
+            width: 100%;
+            border: none;
+            padding: 40px 25px;
+            font-size: 1.25rem;
+            line-height: 1.8;
+            font-family: 'Georgia', serif;
+            resize: none;
+            outline: none;
+            background: var(--editor-bg);
+            color: var(--text);
+            transition: background var(--transition), color var(--transition);
+        }
+        #status {
+            background: rgba(0,0,0,0.2);
+            padding: 12px 25px;
+            font-size: 0.75rem;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        .share-link {
+            color: var(--accent);
+            text-decoration: underline;
             cursor: pointer;
         }
-
-        .panel-btn.danger.active {
-            background: var(--danger);
-            border-color: transparent;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        @media (max-height: 500px) {
+            h1, .credits { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-logo" id="status-indicator"></div>
-            <h1 id="app-title">VibeCall</h1>
-        </div>
-        <div class="nav-actions">
-            <button class="icon-btn" onclick="toggleFullscreen()">📺</button>
-            <button class="icon-btn" onclick="shareSession()">🔗</button>
-        </div>
-    </header>
+    <div id="setup">
+        <h1>Papel Coletivo</h1>
+        <input type="text" id="roomName" placeholder="Nome Da sala">
+        <button class="btn-main" onclick="startSession()">Conectar</button>
+        <div class="credits">Made by: @085_Teuzinnm</div>
+    </div>
 
-    <div class="setup-area" id="setup-panel">
-        <div class="status-box">
-            <span>Seu ID desta sala:</span>
-            <span class="status-value" id="my-id-display">Gerando...</span>
-        </div>
-        <div class="input-group">
-            <input type="text" class="app-input" id="target-id-input" placeholder="Colar ID do amigo para conectar...">
-            <button class="submit-btn" onclick="connectToRoom()">Conectar</button>
+    <div id="app">
+        <textarea id="editor" placeholder="Escreva aqui..."></textarea>
+        <div id="status">
+            <span id="charCount">C: 0</span>
+            <span class="share-link" onclick="shareRoom()">Compartilhar</span>
+            <span>Online</span>
         </div>
     </div>
 
-    <div id="chat-timeline"></div>
-
-    <div class="bottom-panel">
-        <div class="input-group">
-            <input type="text" class="app-input" id="message-input" placeholder="Digite uma mensagem..." onkeypress="handleKeyPress(event)">
-            <button class="submit-btn" onclick="sendMessage()">Enviar</button>
-        </div>
-        <div class="action-grid">
-            <button class="panel-btn" id="mute-btn" onclick="toggleMic()">🎙️ Microfone On</button>
-            <button class="panel-btn" onclick="hangUp()">❌ Sair</button>
-        </div>
-    </div>
-
-    <audio id="remote-audio" autoplay></audio>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <script>
-        const peer = new Peer();
-        let dataConn = null;
-        let audioCall = null;
-        let localStream = null;
+        const setVh = () => {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        window.addEventListener('resize', setVh);
+        window.addEventListener('orientationchange', setVh);
+        setVh();
 
-        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-            .then(stream => { 
-                localStream = stream; 
-                updateStatusIndicator(1);
-            })
-            .catch(() => { updateStatusIndicator(0); });
+        const firebaseConfig = {
+            apiKey: "AIzaSyDthwqD0CGFwDov-zfO-Hx6TD_y3lHsnoc",
+            authDomain: "teuzin-apps.firebaseapp.com",
+            databaseURL: "https://teuzin-apps-default-rtdb.firebaseio.com",
+            projectId: "teuzin-apps",
+            storageBucket: "teuzin-apps.firebasestorage.app",
+            messagingSenderId: "695505471506",
+            appId: "1:695505471506:web:efe322e605af4a30bfb0cb"
+        };
 
-        peer.on('open', id => {
-            document.getElementById('my-id-display').innerText = id;
-            checkUrlParams();
-        });
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentRoom = "";
+        const editor = document.getElementById('editor');
+        const charDisplay = document.getElementById('charCount');
 
-        peer.on('connection', conn => {
-            dataConn = conn;
-            setupDataChannel();
-        });
-
-        peer.on('call', call => {
-            audioCall = call;
-            call.answer(localStream);
-            call.on('stream', stream => {
-                document.getElementById('remote-audio').srcObject = stream;
-                enterActiveChatMode();
-            });
-        });
-
-        function checkUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            const roomParam = params.get('id');
-            if (roomParam) {
-                document.getElementById('target-id-input').value = roomParam;
-                connectToRoom();
-            }
-        }
-
-        function connectToRoom() {
-            const targetId = document.getElementById('target-id-input').value.trim();
-            if (!targetId) return;
-
-            dataConn = peer.connect(targetId);
-            setupDataChannel();
-
-            if (localStream) {
-                audioCall = peer.call(targetId, localStream);
-                audioCall.on('stream', stream => {
-                    document.getElementById('remote-audio').srcObject = stream;
-                    enterActiveChatMode();
-                });
-            }
-        }
-
-        function setupDataChannel() {
-            dataConn.on('open', () => {
-                enterActiveChatMode();
-            });
-
-            dataConn.on('data', data => {
-                appendMessage(data, 'incoming');
-            });
-
-            dataConn.on('close', () => {
-                exitActiveChatMode();
-            });
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            if (dataConn && dataConn.open) {
-                dataConn.send(text);
-                appendMessage(text, 'outgoing');
-                input.value = '';
-            }
-        }
-
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        }
-
-        function appendMessage(text, type) {
-            const timeline = document.getElementById('chat-timeline');
-            const wrapper = document.createElement('div');
-            wrapper.className = `message-wrapper ${type}`;
-
-            const box = document.createElement('div');
-            box.className = 'message-box';
-            box.innerText = text;
-
-            const meta = document.createElement('div');
-            meta.className = 'message-meta';
-            meta.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            wrapper.appendChild(box);
-            wrapper.appendChild(meta);
-            timeline.appendChild(wrapper);
-            timeline.scrollTop = timeline.scrollHeight;
-        }
-
-        function updateStatusIndicator(usersCount) {
-            const ind = document.getElementById('status-indicator');
-            ind.className = 'brand-logo';
-            if (usersCount === 1) {
-                ind.classList.add('one-user');
-            } else if (usersCount === 2) {
-                ind.classList.add('two-users');
-            }
-        }
-
-        function enterActiveChatMode() {
-            document.getElementById('setup-panel').classList.add('hidden');
-            updateStatusIndicator(2);
-            const timeline = document.getElementById('chat-timeline');
-            timeline.innerHTML = '';
-            const notice = document.createElement('div');
-            notice.className = 'system-notification';
-            notice.innerText = "Conexão estabelecida com sucesso.";
-            timeline.appendChild(notice);
-        }
-
-        function exitActiveChatMode() {
-            document.getElementById('setup-panel').classList.remove('hidden');
-            updateStatusIndicator(1);
-            document.getElementById('remote-audio').srcObject = null;
-        }
-
-        function toggleMic() {
-            if (!localStream) return;
-            const audioTrack = localStream.getAudioTracks()[0];
-            audioTrack.enabled = !audioTrack.enabled;
+        function startSession(roomFromUrl) {
+            const name = roomFromUrl || document.getElementById('roomName').value.trim();
+            if(!name) return;
+            currentRoom = name;
             
-            const btn = document.getElementById('mute-btn');
-            if (audioTrack.enabled) {
-                btn.className = "panel-btn";
-                btn.innerHTML = "🎙️ Microfone On";
-            } else {
-                btn.className = "panel-btn danger active";
-                btn.innerHTML = "🔇 Mutado";
-            }
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+            setVh();
+            
+            db.ref('rooms/' + currentRoom).on('value', (snapshot) => {
+                const val = snapshot.val();
+                if (val && val.text !== editor.value) {
+                    const pos = editor.selectionStart;
+                    editor.value = val.text;
+                    editor.setSelectionRange(pos, pos);
+                    updateStats();
+                }
+            });
         }
 
-        function hangUp() {
-            if (dataConn) dataConn.close();
-            if (audioCall) audioCall.close();
-            exitActiveChatMode();
+        function updateStats() {
+            charDisplay.innerText = `C: ${editor.value.length}`;
         }
 
-        function shareSession() {
-            if (!peer.id) return;
-            const shareUrl = window.location.origin + window.location.pathname + "?id=" + peer.id;
+        function shareRoom() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', currentRoom);
+            const shareUrl = url.toString();
+
             if (navigator.share) {
-                navigator.share({ title: 'Entrar na Sala VibeCall', url: shareUrl }).catch(() => {});
+                navigator.share({
+                    title: 'Papel Coletivo',
+                    text: 'Escrever Coletivamente: ' + currentRoom,
+                    url: shareUrl
+                });
             } else {
                 navigator.clipboard.writeText(shareUrl);
+                alert('Link copied to clipboard!');
             }
         }
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            } else {
-                document.exitFullscreen();
+        editor.addEventListener('input', () => {
+            updateStats();
+            db.ref('rooms/' + currentRoom).set({
+                text: editor.value,
+                lastUpdate: Date.now()
+            });
+        });
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const roomParam = params.get('room');
+            if (roomParam) {
+                startSession(roomParam);
             }
-        }
+        };
     </script>
 </body>
 </html>
